@@ -1,0 +1,124 @@
+﻿@model EcoTrack.Models.Departement
+@{
+    ViewData["Title"] = "Détails du département";
+    var actifsNonAttribues = Model.Actifs.Where(a => a.Etat != EcoTrack.Enums.EtatActif.Attribue).ToList();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">@Model.Nom</h3>
+        <p class="text-muted mb-0">
+            Code : @(Model.Code ?? "—") | Localisation : @(Model.Localisation ?? "—")
+            @if (!Model.EstActif)
+            {
+                <span class="badge bg-secondary ms-2">Désactivé</span>
+            }
+        </p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Employés</div>
+            <div class="stat-value">@Model.Employes.Count</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Actifs au total</div>
+            <div class="stat-value">@Model.Actifs.Count</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Actifs non attribués</div>
+            <div class="stat-value">@actifsNonAttribues.Count</div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3">Employés et leurs actifs</h5>
+<div class="table-responsive-wrapper mb-4">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Poste</th>
+                <th>Actifs attribués</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employe in Model.Employes.OrderBy(e => e.Nom))
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Employes" asp-action="Details" asp-route-id="@employe.Id">
+                            @employe.Prenom @employe.Nom
+                        </a>
+                        @if (!employe.EstActif)
+                        {
+                            <span class="badge bg-secondary ms-1">Inactif</span>
+                        }
+                    </td>
+                    <td>@(employe.Poste ?? "—")</td>
+                    <td>
+                        @if (employe.Affectations.Any())
+                        {
+                            @foreach (var affectation in employe.Affectations)
+                            {
+                                <span class="badge bg-light text-dark border me-1">
+                                    @affectation.Actif?.Nom
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">Aucun actif</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Employes.Any())
+            {
+                <tr>
+                    <td colspan="3" class="text-muted">Aucun employé dans ce département.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<h5 class="mb-3">Actifs non attribués du département</h5>
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Numéro de série</th>
+                <th>Catégorie</th>
+                <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var actif in actifsNonAttribues)
+            {
+                <tr>
+                    <td>@actif.Nom</td>
+                    <td>@actif.NumeroSerie</td>
+                    <td>@actif.CategorieActif?.Nom</td>
+                    <td>@actif.Etat</td>
+                </tr>
+            }
+            @if (!actifsNonAttribues.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">Tous les actifs de ce département sont attribués.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

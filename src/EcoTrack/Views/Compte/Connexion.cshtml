@@ -1,0 +1,44 @@
+﻿@model EcoTrack.ViewModels.ConnexionViewModel
+@{
+    ViewData["Title"] = "Connexion";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h3 class="card-title text-center mb-4">EcoTrack - Connexion</h3>
+
+                <form asp-action="Connexion" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="NomUtilisateur" class="form-label"></label>
+                        <input asp-for="NomUtilisateur" class="form-control" autocomplete="username" />
+                        <span asp-validation-for="NomUtilisateur" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="MotDePasse" class="form-label"></label>
+                        <input asp-for="MotDePasse" class="form-control" autocomplete="current-password" />
+                        <span asp-validation-for="MotDePasse" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="SeSouvenirDeMoi" class="form-check-input" />
+                        <label asp-for="SeSouvenirDeMoi" class="form-check-label"></label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

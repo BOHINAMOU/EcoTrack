@@ -1,0 +1,25 @@
+﻿@model EcoTrack.Models.Departement
+@{
+    ViewData["Title"] = "Supprimer le département";
+}
+
+<h3>Confirmer la suppression</h3>
+
+<div class="card bg-white p-4" style="max-width: 500px;">
+    <p>Voulez-vous vraiment supprimer le département <strong>@Model.Nom</strong> ?</p>
+
+    @if (Model.Employes.Any())
+    {
+        <div class="alert alert-warning">
+            Ce département contient encore <strong>@Model.Employes.Count</strong> employé(s).
+            La suppression sera refusée tant qu'ils n'auront pas été réaffectés à un autre département.
+        </div>
+    }
+
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>

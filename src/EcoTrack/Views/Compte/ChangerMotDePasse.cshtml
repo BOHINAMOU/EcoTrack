@@ -1,0 +1,46 @@
+﻿@model EcoTrack.ViewModels.ChangerMotDePasseViewModel
+@{
+    ViewData["Title"] = "Changer le mot de passe";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <h4 class="card-title mb-3">Changement de mot de passe requis</h4>
+                <p class="text-muted">Pour des raisons de sécurité, vous devez définir un nouveau mot de passe avant de continuer.</p>
+
+                <form asp-action="ChangerMotDePasse" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="MotDePasseActuel" class="form-label"></label>
+                        <input asp-for="MotDePasseActuel" class="form-control" />
+                        <span asp-validation-for="MotDePasseActuel" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NouveauMotDePasse" class="form-label"></label>
+                        <input asp-for="NouveauMotDePasse" class="form-control" />
+                        <span asp-validation-for="NouveauMotDePasse" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ConfirmationMotDePasse" class="form-label"></label>
+                        <input asp-for="ConfirmationMotDePasse" class="form-control" />
+                        <span asp-validation-for="ConfirmationMotDePasse" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Valider</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
