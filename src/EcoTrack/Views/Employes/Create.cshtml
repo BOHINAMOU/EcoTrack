@@ -1,0 +1,142 @@
+﻿@model EcoTrack.ViewModels.EmployeCreerViewModel
+@{
+    ViewData["Title"] = "Nouvel employé";
+}
+
+<h3>Nouvel employé</h3>
+<p class="text-muted">L'attribution d'un actif est obligatoire à la création.</p>
+
+<div class="card p-4">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <h5 class="mb-3">Informations de l'employé</h5>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Nom" class="form-label"></label>
+                <input asp-for="Nom" class="form-control" />
+                <span asp-validation-for="Nom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Prenom" class="form-label"></label>
+                <input asp-for="Prenom" class="form-control" />
+                <span asp-validation-for="Prenom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="Indicatif" class="form-label"></label>
+                <select asp-for="Indicatif" class="form-select">
+                    @foreach (var (code, pays) in Model.Indicatifs)
+                    {
+                        <option value="@code">@code (@pays)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="NumeroTelephone" class="form-label"></label>
+                <input asp-for="NumeroTelephone" class="form-control" inputmode="numeric" pattern="[0-9]*" />
+                <span asp-validation-for="NumeroTelephone" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Poste" class="form-label"></label>
+                <input asp-for="Poste" class="form-control" />
+                <span asp-validation-for="Poste" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="DepartementId" class="form-label"></label>
+                <select asp-for="DepartementId" class="form-select"
+                        asp-items="@(new SelectList(Model.Departements, "Id", "Nom"))">
+                    <option value="">-- Choisir --</option>
+                </select>
+                <span asp-validation-for="DepartementId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <hr class="my-4" />
+
+        <h5 class="mb-3">Attribution d'un actif <span class="text-danger">*</span></h5>
+
+        <div class="mb-3">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" asp-for="ModeAttribution"
+                       value="@EcoTrack.ViewModels.ModeAttributionActif.ActifExistant" id="modeExistant" checked />
+                <label class="form-check-label" for="modeExistant">Choisir un actif existant en stock</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" asp-for="ModeAttribution"
+                       value="@EcoTrack.ViewModels.ModeAttributionActif.NouvelActif" id="modeNouveau" />
+                <label class="form-check-label" for="modeNouveau">Enregistrer un nouvel actif</label>
+            </div>
+        </div>
+
+        <div id="blocActifExistant" class="mb-3">
+            <label asp-for="ActifExistantId" class="form-label"></label>
+            <select asp-for="ActifExistantId" class="form-select"
+                    asp-items="@(new SelectList(Model.ActifsDisponibles, "Id", "Nom"))">
+                <option value="">-- Choisir un actif disponible --</option>
+            </select>
+            <span asp-validation-for="ActifExistantId" class="text-danger"></span>
+            @if (!Model.ActifsDisponibles.Any())
+            {
+                <div class="form-text text-warning">Aucun actif disponible en stock actuellement.</div>
+            }
+        </div>
+
+        <div id="blocNouvelActif" class="row" style="display: none;">
+            <div class="col-md-6 mb-3">
+                <label asp-for="NouvelActifNom" class="form-label"></label>
+                <input asp-for="NouvelActifNom" class="form-control" />
+                <span asp-validation-for="NouvelActifNom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NouvelActifNumeroSerie" class="form-label"></label>
+                <input asp-for="NouvelActifNumeroSerie" class="form-control" />
+                <span asp-validation-for="NouvelActifNumeroSerie" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NouvelActifMarque" class="form-label"></label>
+                <input asp-for="NouvelActifMarque" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NouvelActifModele" class="form-label"></label>
+                <input asp-for="NouvelActifModele" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NouvelActifCategorieId" class="form-label"></label>
+                <select asp-for="NouvelActifCategorieId" class="form-select"
+                        asp-items="@(new SelectList(Model.Categories, "Id", "Nom"))">
+                    <option value="">-- Choisir --</option>
+                </select>
+                <span asp-validation-for="NouvelActifCategorieId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Créer l'employé</button>
+        <a asp-action="Index" class="btn btn-outline-secondary mt-3">Annuler</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        var radioExistant = document.getElementById('modeExistant');
+        var radioNouveau = document.getElementById('modeNouveau');
+        var blocExistant = document.getElementById('blocActifExistant');
+        var blocNouveau = document.getElementById('blocNouvelActif');
+
+        function basculerAffichage() {
+            var estExistant = radioExistant.checked;
+            blocExistant.style.display = estExistant ? '' : 'none';
+            blocNouveau.style.display = estExistant ? 'none' : '';
+        }
+
+        radioExistant.addEventListener('change', basculerAffichage);
+        radioNouveau.addEventListener('change', basculerAffichage);
+        basculerAffichage();
+    </script>
+}

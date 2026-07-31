@@ -21,15 +21,32 @@
                 </div>
 
                 <nav class="sidebar-nav">
-                    <a asp-controller="Home" asp-action="Index" class="nav-link">
+                    <a asp-controller="Home" asp-action="Index" class="nav-link lien-accueil">
                         <i class="bi bi-speedometer2"></i> Mon tableau de bord
                     </a>
-                    <a asp-controller="Employes" asp-action="Index" class="nav-link">
-                        <i class="bi bi-people"></i> Gestion employés
-                    </a>
-                    <a asp-controller="Actifs" asp-action="Index" class="nav-link">
-                        <i class="bi bi-laptop"></i> Gestion actifs
-                    </a>
+
+                    <div class="nav-link nav-group-toggle" data-cible="sousMenuEmployes">
+                        <span><i class="bi bi-people"></i> Gestion employés</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="nav-submenu" id="sousMenuEmployes">
+                        <a asp-controller="Employes" asp-action="Index">Liste des employés</a>
+                        <a asp-controller="Employes" asp-action="Create">Nouvel employé</a>
+                        <a asp-controller="Employes" asp-action="Rechercher">Rechercher un employé</a>
+                        <a asp-controller="Rapports" asp-action="Employe">Rapport d'un employé</a>
+                    </div>
+
+                    <div class="nav-link nav-group-toggle" data-cible="sousMenuActifs">
+                        <span><i class="bi bi-laptop"></i> Gestion actifs</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="nav-submenu" id="sousMenuActifs">
+                        <a asp-controller="Actifs" asp-action="Index">Tous les actifs</a>
+                        <a asp-controller="Actifs" asp-action="Create">Nouvel actif</a>
+                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Disponible">Actifs disponibles</a>
+                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Attribue">Actifs attribués</a>
+                    </div>
+
                     <a asp-controller="Departements" asp-action="Index" class="nav-link">
                         <i class="bi bi-building"></i> Départements / agences
                     </a>
@@ -107,5 +124,15 @@
         overlay?.addEventListener('click', fermerSidebar);
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        document.querySelectorAll('.nav-group-toggle').forEach(bouton => {
+            bouton.addEventListener('click', () => {
+                const cible = document.getElementById(bouton.dataset.cible);
+                bouton.classList.toggle('ouvert');
+                cible?.classList.toggle('ouvert');
+            });
+        });
+    </script>
 </body>
 </html>

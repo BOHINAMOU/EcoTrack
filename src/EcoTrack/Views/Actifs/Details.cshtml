@@ -1,0 +1,68 @@
+﻿@model EcoTrack.Models.Actif
+@{
+    ViewData["Title"] = "Détails de l'actif";
+    var historique = ViewBag.Historique as List<EcoTrack.Models.Affectation> ?? new();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">@Model.Nom</h3>
+        <p class="text-muted mb-0">N° série : @Model.NumeroSerie | Catégorie : @Model.CategorieActif?.Nom</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+</div>
+
+<div class="stat-card mb-4" style="max-width: 300px;">
+    <div class="stat-label">État actuel</div>
+    <div class="stat-value">
+        @switch (Model.Etat)
+        {
+            case EcoTrack.Enums.EtatActif.Disponible:
+                <span class="badge bg-success fs-6">Disponible</span>
+                break;
+            case EcoTrack.Enums.EtatActif.Attribue:
+                <span class="badge fs-6" style="background-color: var(--ecotrack-bleu);">Attribué</span>
+                break;
+            case EcoTrack.Enums.EtatActif.Detruit:
+                <span class="badge bg-danger fs-6">Détruit</span>
+                break;
+        }
+    </div>
+</div>
+
+<h5 class="mb-3">Historique complet des affectations</h5>
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Du</th>
+                <th>Au</th>
+                <th>Motif</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var affectation in historique)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Employes" asp-action="Details" asp-route-id="@affectation.EmployeId">
+                            @affectation.Employe?.Prenom @affectation.Employe?.Nom
+                        </a>
+                    </td>
+                    <td>@affectation.DateAffectation.ToString("dd/MM/yyyy")</td>
+                    <td>@(affectation.DateRetrait?.ToString("dd/MM/yyyy") ?? "En cours")</td>
+                    <td>@(affectation.Motif ?? "—")</td>
+                </tr>
+            }
+            @if (!historique.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">Cet actif n'a jamais été attribué.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

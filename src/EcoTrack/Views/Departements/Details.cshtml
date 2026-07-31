@@ -1,15 +1,15 @@
-﻿@model EcoTrack.Models.Departement
+﻿@model EcoTrack.ViewModels.DepartementDetailsViewModel
 @{
     ViewData["Title"] = "Détails du département";
-    var actifsNonAttribues = Model.Actifs.Where(a => a.Etat != EcoTrack.Enums.EtatActif.Attribue).ToList();
+    var departement = Model.Departement;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="mb-0">@Model.Nom</h3>
+        <h3 class="mb-0">@departement.Nom</h3>
         <p class="text-muted mb-0">
-            Code : @(Model.Code ?? "—") | Localisation : @(Model.Localisation ?? "—")
-            @if (!Model.EstActif)
+            Code : @(departement.Code ?? "—") | Localisation : @(departement.Localisation ?? "—")
+            @if (!departement.EstActif)
             {
                 <span class="badge bg-secondary ms-2">Désactivé</span>
             }
@@ -21,28 +21,75 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="stat-card">
             <div class="stat-label">Employés</div>
-            <div class="stat-value">@Model.Employes.Count</div>
+            <div class="stat-value">@departement.Employes.Count</div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <div class="stat-card">
-            <div class="stat-label">Actifs au total</div>
-            <div class="stat-value">@Model.Actifs.Count</div>
+            <div class="stat-label">Actifs détenus par ce département</div>
+            <div class="stat-value">@Model.RepartitionParCategorie.Sum(r => r.Nombre)</div>
         </div>
     </div>
-    <div class="col-md-4">
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-5">
         <div class="stat-card">
-            <div class="stat-label">Actifs non attribués</div>
-            <div class="stat-value">@actifsNonAttribues.Count</div>
+            <h6 class="mb-3">Répartition des actifs par catégorie</h6>
+            @if (Model.RepartitionParCategorie.Any())
+            {
+                <canvas id="graphiqueCategories" style="max-height: 260px;"></canvas>
+                <ul class="list-unstyled mt-3 mb-0">
+                    @foreach (var r in Model.RepartitionParCategorie)
+                    {
+                        <li class="d-flex align-items-center mb-1" style="font-size: 0.85rem;">
+                            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:@r.CouleurHex; margin-right:8px;"></span>
+                            @r.NomCategorie — @r.Nombre (@r.Pourcentage %)
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Aucun actif détenu par ce département pour l'instant.</p>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="stat-card">
+            <h6 class="mb-3">Dernières affectations du département</h6>
+            @if (Model.DernieresAffectations.Any())
+            {
+                <ul class="list-group">
+                    @foreach (var affectation in Model.DernieresAffectations)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                <strong>@affectation.Actif?.Nom</strong> → @affectation.Employe?.Prenom @affectation.Employe?.Nom
+                                @if (affectation.DateRetrait is not null)
+                                {
+                                    <span class="badge bg-secondary ms-1">Terminée</span>
+                                }
+                            </span>
+                            <span class="text-muted small">@affectation.DateAffectation.ToString("dd/MM/yyyy")</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Aucune affectation enregistrée pour ce département.</p>
+            }
         </div>
     </div>
 </div>
 
 <h5 class="mb-3">Employés et leurs actifs</h5>
-<div class="table-responsive-wrapper mb-4">
+<div class="table-responsive-wrapper">
     <table class="table table-hover">
         <thead>
             <tr>
@@ -52,7 +99,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var employe in Model.Employes.OrderBy(e => e.Nom))
+            @foreach (var employe in departement.Employes.OrderBy(e => e.Nom))
             {
                 <tr>
                     <td>
@@ -70,9 +117,7 @@
                         {
                             @foreach (var affectation in employe.Affectations)
                             {
-                                <span class="badge bg-light text-dark border me-1">
-                                    @affectation.Actif?.Nom
-                                </span>
+                                <span class="badge bg-light text-dark border me-1">@affectation.Actif?.Nom</span>
                             }
                         }
                         else
@@ -82,7 +127,7 @@
                     </td>
                 </tr>
             }
-            @if (!Model.Employes.Any())
+            @if (!departement.Employes.Any())
             {
                 <tr>
                     <td colspan="3" class="text-muted">Aucun employé dans ce département.</td>
@@ -92,33 +137,24 @@
     </table>
 </div>
 
-<h5 class="mb-3">Actifs non attribués du département</h5>
-<div class="table-responsive-wrapper">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Numéro de série</th>
-                <th>Catégorie</th>
-                <th>État</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var actif in actifsNonAttribues)
-            {
-                <tr>
-                    <td>@actif.Nom</td>
-                    <td>@actif.NumeroSerie</td>
-                    <td>@actif.CategorieActif?.Nom</td>
-                    <td>@actif.Etat</td>
-                </tr>
-            }
-            @if (!actifsNonAttribues.Any())
-            {
-                <tr>
-                    <td colspan="4" class="text-muted">Tous les actifs de ce département sont attribués.</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const ctx = document.getElementById('graphiqueCategories');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => $"'{r.NomCategorie}'")))],
+                    datasets: [{
+                        data: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => r.Nombre)))],
+                        backgroundColor: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => $"'{r.CouleurHex}'")))]
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    </script>
+}

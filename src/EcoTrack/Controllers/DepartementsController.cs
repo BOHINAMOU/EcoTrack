@@ -1,5 +1,6 @@
 ﻿using EcoTrack.Data;
 using EcoTrack.Models;
+using EcoTrack.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,7 @@ namespace EcoTrack.Controllers
                 .Include(d => d.Employes)
                     .ThenInclude(e => e.Affectations.Where(a => a.DateRetrait == null))
                         .ThenInclude(a => a.Actif)
-                .Include(d => d.Actifs)
+                            .ThenInclude(actif => actif!.CategorieActif)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (departement is null)
@@ -43,8 +44,49 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            return View(departement);
+            var actifsDetenus = departement.Employes
+                .SelectMany(e => e.Affectations)
+                .Select(a => a.Actif)
+                .Where(a => a is not null)
+                .Select(a => a!)
+                .ToList();
+
+            var palette = new[] { "#0d3b66", "#ffc107", "#2e8540", "#d9534f", "#6f42c1", "#17a2b8", "#fd7e14" };
+
+            var repartition = actifsDetenus
+                .GroupBy(a => a.CategorieActif?.Nom ?? "Non catégorisé")
+                .Select((groupe, index) => new RepartitionCategorie
+                {
+                    NomCategorie = groupe.Key,
+                    Nombre = groupe.Count(),
+                    Pourcentage = actifsDetenus.Count == 0
+                        ? 0
+                        : Math.Round(groupe.Count() * 100.0 / actifsDetenus.Count, 1),
+                    CouleurHex = palette[index % palette.Length]
+                })
+                .OrderByDescending(r => r.Nombre)
+                .ToList();
+
+            var employesIds = departement.Employes.Select(e => e.Id).ToList();
+
+            var dernieresAffectations = await _context.Affectations
+                .Include(a => a.Actif)
+                .Include(a => a.Employe)
+                .Where(a => employesIds.Contains(a.EmployeId))
+                .OrderByDescending(a => a.DateAffectation)
+                .Take(5)
+                .ToListAsync();
+
+            var viewModel = new DepartementDetailsViewModel
+            {
+                Departement = departement,
+                RepartitionParCategorie = repartition,
+                DernieresAffectations = dernieresAffectations
+            };
+
+            return View(viewModel);
         }
+
         // GET /Departements/Create
         public IActionResult Create()
         {
@@ -56,6 +98,14 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Departement departement)
         {
+            var existeDeja = await _context.Departements
+                .AnyAsync(d => d.Nom.ToLower() == departement.Nom.ToLower());
+
+            if (existeDeja)
+            {
+                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(departement);
@@ -89,6 +139,14 @@ namespace EcoTrack.Controllers
             if (id != departement.Id)
             {
                 return NotFound();
+            }
+
+            var existeDeja = await _context.Departements
+                .AnyAsync(d => d.Id != departement.Id && d.Nom.ToLower() == departement.Nom.ToLower());
+
+            if (existeDeja)
+            {
+                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
             }
 
             if (!ModelState.IsValid)

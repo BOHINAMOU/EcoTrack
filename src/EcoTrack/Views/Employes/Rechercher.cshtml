@@ -1,0 +1,77 @@
+﻿@{
+    ViewData["Title"] = "Rechercher un employé";
+}
+
+<h3 class="mb-1">Rechercher un employé</h3>
+<p class="text-muted mb-4">Tapez un nom, prénom ou poste pour retrouver un employé et ses actifs.</p>
+
+<div class="position-relative mb-4" style="max-width: 500px;">
+    <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
+    <input type="text" id="champRecherche" class="form-control ps-5" placeholder="Nom, prénom ou poste..." autocomplete="off" autofocus />
+</div>
+
+<div id="zoneResultats"></div>
+<p id="messageInitial" class="text-muted">Commencez à taper pour voir les résultats.</p>
+<p id="messageAucunResultat" class="text-muted" style="display:none;">Aucun employé ne correspond à cette recherche.</p>
+
+@section Scripts {
+<script>
+    var champ = document.getElementById('champRecherche');
+    var zone = document.getElementById('zoneResultats');
+    var messageInitial = document.getElementById('messageInitial');
+    var messageAucun = document.getElementById('messageAucunResultat');
+    var minuteur;
+
+    champ.addEventListener('input', function () {
+        clearTimeout(minuteur);
+        var terme = champ.value.trim();
+
+        if (terme.length < 2) {
+            zone.innerHTML = '';
+            messageInitial.style.display = '';
+            messageAucun.style.display = 'none';
+            return;
+        }
+
+        minuteur = setTimeout(function () {
+            fetch('/Employes/RechercherJson?terme=' + encodeURIComponent(terme))
+                .then(function (reponse) { return reponse.json(); })
+                .then(function (resultats) { afficherResultats(resultats); });
+        }, 300);
+    });
+
+    function afficherResultats(resultats) {
+        messageInitial.style.display = 'none';
+
+        if (resultats.length === 0) {
+            zone.innerHTML = '';
+            messageAucun.style.display = '';
+            return;
+        }
+
+        messageAucun.style.display = 'none';
+
+        var html = '<div class="table-responsive-wrapper"><table class="table table-hover"><thead><tr>'
+            + '<th>Employé</th><th>Département</th><th>Poste</th><th>Actifs</th><th>Statut</th><th></th>'
+            + '</tr></thead><tbody>';
+
+        resultats.forEach(function (e) {
+            var badgeStatut = e.estActif
+                ? '<span class="badge bg-success">Actif</span>'
+                : '<span class="badge bg-secondary">Inactif</span>';
+
+            html += '<tr>'
+                + '<td>' + e.nomComplet + '</td>'
+                + '<td>' + e.departement + '</td>'
+                + '<td>' + e.poste + '</td>'
+                + '<td>' + e.nombreActifs + '</td>'
+                + '<td>' + badgeStatut + '</td>'
+                + '<td class="text-end"><a href="/Employes/Details/' + e.id + '" class="btn btn-sm btn-outline-primary">Voir la fiche</a></td>'
+                + '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        zone.innerHTML = html;
+    }
+</script>
+}

@@ -196,3 +196,169 @@ body {
         overflow-x: auto;
     }
 }
+/* Lien "Mon tableau de bord" mis en évidence */
+.sidebar-nav .nav-link.lien-accueil {
+    color: var(--ecotrack-accent);
+    font-weight: 600;
+}
+
+    .sidebar-nav .nav-link.lien-accueil:hover {
+        color: var(--ecotrack-accent);
+        border-left-color: var(--ecotrack-accent);
+    }
+
+/* Sous-menus */
+.sidebar-nav .nav-group-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.nav-group-toggle .bi-chevron-down {
+    transition: transform 0.2s ease;
+    font-size: 0.8rem;
+}
+
+.nav-group-toggle.ouvert .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.nav-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+    .nav-submenu.ouvert {
+        max-height: 300px;
+    }
+
+    .nav-submenu a {
+        display: block;
+        color: rgba(255, 255, 255, 0.7);
+        padding: 0.6rem 1.25rem 0.6rem 2.5rem;
+        text-decoration: none;
+        font-size: 0.87rem;
+    }
+
+        .nav-submenu a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+/* ---------- Bandeau d'accueil du dashboard ---------- */
+.dashboard-hero {
+    background: linear-gradient(135deg, var(--ecotrack-bleu) 0%, var(--ecotrack-bleu-clair) 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    box-shadow: 0 4px 18px rgba(13, 59, 102, 0.25);
+}
+
+.dashboard-hero-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+.dashboard-hero h3 {
+    margin: 0;
+    font-weight: 400;
+    font-size: 1.15rem;
+}
+
+.dashboard-hero .nom-utilisateur {
+    color: var(--ecotrack-accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.dashboard-hero p {
+    margin: 0.25rem 0 0;
+    opacity: 0.85;
+    font-size: 0.9rem;
+}
+
+/* ---------- Cartes stats avec icône ---------- */
+.stat-card-v2 {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+    .stat-card-v2 .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card-v2 .stat-label {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-bottom: 2px;
+    }
+
+    .stat-card-v2 .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+.search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 50;
+}
+
+    .search-results-dropdown .search-section-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #9ca3af;
+        padding: 0.6rem 1rem 0.3rem;
+        font-weight: 600;
+    }
+
+    .search-results-dropdown a.search-item {
+        display: block;
+        padding: 0.6rem 1rem;
+        color: #1f2937;
+        text-decoration: none;
+        border-top: 1px solid #f1f3f5;
+    }
+
+        .search-results-dropdown a.search-item:hover {
+            background: #f4f6f9;
+        }
+
+    .search-results-dropdown .search-item small {
+        color: #6b7280;
+    }

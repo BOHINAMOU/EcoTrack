@@ -1,8 +1,192 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model EcoTrack.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Tableau de bord";
+    var initiales = $"{Model.PrenomUtilisateur.FirstOrDefault()}{Model.NomUtilisateur.FirstOrDefault()}".ToUpper();
+    var totalActifs = Model.NombreActifsDisponibles + Model.NombreActifsAttribues + Model.NombreActifsDetruits;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard-hero">
+    <div class="dashboard-hero-avatar">@initiales</div>
+    <div>
+        <h3>Bienvenue, @Model.PrenomUtilisateur <span class="nom-utilisateur">@Model.NomUtilisateur</span></h3>
+        <p>Voici un aperçu du parc informatique EcoTrack — Ecobank Togo</p>
+    </div>
 </div>
+
+<div class="mb-4 position-relative">
+    <div class="position-relative">
+        <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
+        <input type="text" id="rechercheGlobale" class="form-control ps-5" placeholder="Rechercher un employé (nom complet) ou un actif (nom / numéro de série)..." autocomplete="off" />
+    </div>
+    <div id="resultatsRecherche" class="search-results-dropdown" style="display:none;"></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card-v2">
+            <div class="stat-icon" style="background:#eef2f7; color: var(--ecotrack-bleu);">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+                <div class="stat-label">Employés enregistrés</div>
+                <div class="stat-value">@Model.NombreEmployes</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-v2">
+            <div class="stat-icon" style="background:#e6f4ea; color:#2e8540;">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <div>
+                <div class="stat-label">Actifs disponibles</div>
+                <div class="stat-value" style="color:#2e8540;">@Model.NombreActifsDisponibles</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card-v2">
+            <div class="stat-icon" style="background:#eef2f7; color: var(--ecotrack-bleu);">
+                <i class="bi bi-laptop"></i>
+            </div>
+            <div>
+                <div class="stat-label">Actifs attribués</div>
+                <div class="stat-value" style="color: var(--ecotrack-bleu);">@Model.NombreActifsAttribues</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="stat-card">
+            <h6 class="mb-3">Répartition globale du parc</h6>
+            @if (totalActifs > 0)
+            {
+                var pctDispo = Math.Round(Model.NombreActifsDisponibles * 100.0 / totalActifs, 1);
+                var pctAttrib = Math.Round(Model.NombreActifsAttribues * 100.0 / totalActifs, 1);
+                var pctDetruit = Math.Round(Model.NombreActifsDetruits * 100.0 / totalActifs, 1);
+
+                <canvas id="graphiqueEtatsActifs" style="max-height: 240px;"></canvas>
+                <div class="d-flex justify-content-around mt-3" style="font-size: 0.85rem;">
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2e8540;margin-right:6px;"></span>Disponibles (@pctDispo %)</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0d3b66;margin-right:6px;"></span>Attribués (@pctAttrib %)</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d9534f;margin-right:6px;"></span>Détruits (@pctDetruit %)</span>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Aucun actif enregistré pour l'instant.</p>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="stat-card h-100">
+            <h6 class="mb-3">Raccourcis rapides</h6>
+            <div class="d-flex flex-column gap-2">
+                <a asp-controller="Employes" asp-action="Create" class="btn btn-primary text-start">
+                    <i class="bi bi-person-plus me-2"></i> Nouvel employé
+                </a>
+                <a asp-controller="Actifs" asp-action="Create" class="btn btn-outline-primary text-start">
+                    <i class="bi bi-plus-circle me-2"></i> Nouvel actif
+                </a>
+                <a asp-controller="Departements" asp-action="Index" class="btn btn-outline-secondary text-start">
+                    <i class="bi bi-building me-2"></i> Voir les départements
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const ctxEtats = document.getElementById('graphiqueEtatsActifs');
+    if (ctxEtats) {
+        new Chart(ctxEtats, {
+            type: 'doughnut',
+            data: {
+                labels: ['Disponibles', 'Attribués', 'Détruits'],
+                datasets: [{
+                    data: [@Model.NombreActifsDisponibles, @Model.NombreActifsAttribues, @Model.NombreActifsDetruits],
+                    backgroundColor: ['#2e8540', '#0d3b66', '#d9534f']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (contexte) {
+                                var total = contexte.dataset.data.reduce(function (a, b) { return a + b; }, 0);
+                                var valeur = contexte.parsed;
+                                var pct = total > 0 ? Math.round((valeur / total) * 1000) / 10 : 0;
+                                return contexte.label + ' : ' + valeur + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+</script>
+<script>
+    var champRecherche = document.getElementById('rechercheGlobale');
+    var zoneResultats = document.getElementById('resultatsRecherche');
+    var minuteur;
+
+    champRecherche.addEventListener('input', function () {
+        clearTimeout(minuteur);
+        var terme = champRecherche.value.trim();
+
+        if (terme.length < 2) {
+            zoneResultats.style.display = 'none';
+            return;
+        }
+
+        minuteur = setTimeout(function () {
+            fetch('/Home/Rechercher?terme=' + encodeURIComponent(terme))
+                .then(function (reponse) { return reponse.json(); })
+                .then(function (donnees) { afficherResultats(donnees); });
+        }, 300);
+    });
+
+    function afficherResultats(donnees) {
+        var html = '';
+
+        if (donnees.employes.length > 0) {
+            html += '<div class="search-section-title">Employés</div>';
+            donnees.employes.forEach(function (e) {
+                html += '<a class="search-item" href="/Employes/Details/' + e.id + '">'
+                    + '<strong>' + e.nomComplet + '</strong><br><small>' + e.departement + '</small></a>';
+            });
+        }
+
+        if (donnees.actifs.length > 0) {
+            html += '<div class="search-section-title">Actifs</div>';
+            donnees.actifs.forEach(function (a) {
+                var detenteur = a.employeActuel ? ('Chez ' + a.employeActuel) : 'Aucun détenteur actuel';
+                var lien = a.employeId ? ('/Employes/Details/' + a.employeId) : '#';
+                html += '<a class="search-item" href="' + lien + '">'
+                    + '<strong>' + a.nom + '</strong> (' + a.numeroSerie + ') — ' + a.etat
+                    + '<br><small>' + detenteur + '</small></a>';
+            });
+        }
+
+        if (html === '') {
+            html = '<div class="p-3 text-muted">Aucun résultat.</div>';
+        }
+
+        zoneResultats.innerHTML = html;
+        zoneResultats.style.display = 'block';
+    }
+
+    document.addEventListener('click', function (evenement) {
+        if (!champRecherche.contains(evenement.target) && !zoneResultats.contains(evenement.target)) {
+            zoneResultats.style.display = 'none';
+        }
+    });
+</script>
+}

@@ -1,0 +1,101 @@
+﻿@model IEnumerable<EcoTrack.Models.Employe>
+@{
+    ViewData["Title"] = "Employés";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Gestion des employés</h3>
+        <p class="text-muted mb-0">@Model.Count() employé(s) enregistré(s)</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Nouvel employé
+    </a>
+</div>
+
+<div class="mb-3 position-relative" style="max-width: 400px;">
+    <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
+    <input type="text" id="filtreEmployes" class="form-control ps-5" placeholder="Filtrer par nom, département ou poste..." autocomplete="off" />
+</div>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover" id="tableEmployes">
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Département</th>
+                <th>Poste</th>
+                <th>Actifs attribués</th>
+                <th>Statut</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employe in Model)
+            {
+                <tr class="@(!employe.EstActif ? "table-secondary" : "")"
+                    data-recherche="@($"{employe.Prenom} {employe.Nom} {employe.Departement?.Nom} {employe.Poste}".ToLower())">
+                    <td><a asp-action="Details" asp-route-id="@employe.Id">@employe.Prenom @employe.Nom</a></td>
+                    <td>@employe.Departement?.Nom</td>
+                    <td>@(employe.Poste ?? "—")</td>
+                    <td>@employe.Affectations.Count</td>
+                    <td>
+                        @if (employe.EstActif)
+                        {
+                            <span class="badge bg-success">Actif</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactif</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (User.IsInRole("AdminPrincipal"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@employe.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                        }
+                        <form asp-action="BasculerActivation" asp-route-id="@employe.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            @if (employe.EstActif)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<p id="aucunResultat" class="text-muted" style="display:none;">Aucun employé ne correspond à votre recherche.</p>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Aucun employé enregistré pour l'instant.</p>
+}
+
+@section Scripts {
+<script>
+    var champFiltre = document.getElementById('filtreEmployes');
+    var lignes = document.querySelectorAll('#tableEmployes tbody tr');
+    var messageAucunResultat = document.getElementById('aucunResultat');
+
+    champFiltre.addEventListener('input', function () {
+        var terme = champFiltre.value.trim().toLowerCase();
+        var nombreVisibles = 0;
+
+        lignes.forEach(function (ligne) {
+            var correspond = ligne.dataset.recherche.indexOf(terme) !== -1;
+            ligne.style.display = correspond ? '' : 'none';
+            if (correspond) { nombreVisibles++; }
+        });
+
+        messageAucunResultat.style.display = nombreVisibles === 0 ? '' : 'none';
+    });
+</script>
+}

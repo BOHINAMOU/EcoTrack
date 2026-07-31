@@ -1,0 +1,54 @@
+﻿@model EcoTrack.ViewModels.ActifFormViewModel
+@{
+    ViewData["Title"] = "Nouvel actif";
+}
+
+<h3>Nouvel actif</h3>
+
+<div class="card p-4" style="max-width: 600px;">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Nom" class="form-label"></label>
+                <input asp-for="Nom" class="form-control" />
+                <span asp-validation-for="Nom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NumeroSerie" class="form-label"></label>
+                <input asp-for="NumeroSerie" class="form-control" />
+                <span asp-validation-for="NumeroSerie" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Marque" class="form-label"></label>
+                <input asp-for="Marque" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Modele" class="form-label"></label>
+                <input asp-for="Modele" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="DateAcquisition" class="form-label"></label>
+                <input asp-for="DateAcquisition" class="form-control" />
+                <span asp-validation-for="DateAcquisition" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="CategorieActifId" class="form-label"></label>
+                <select asp-for="CategorieActifId" class="form-select"
+                        asp-items="@(new SelectList(Model.Categories, "Id", "Nom"))">
+                    <option value="">-- Choisir --</option>
+                </select>
+                <span asp-validation-for="CategorieActifId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Créer</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

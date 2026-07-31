@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using EcoTrack.Models;
 
-namespace EcoTrack.Models
+namespace EcoTrack.ViewModels
 {
-    public class Employe
+    public class EmployeModifierViewModel
     {
         public int Id { get; set; }
 
@@ -13,27 +14,29 @@ namespace EcoTrack.Models
         [Required(ErrorMessage = "Le prénom est obligatoire.")]
         [StringLength(100)]
         public string Prenom { get; set; } = string.Empty;
-        [Required(ErrorMessage = "L'email est obligatoire.")]
+
         [EmailAddress]
         [StringLength(150)]
-        public string Email { get; set; } = string.Empty;
+        public string? Email { get; set; }
 
-        [Phone(ErrorMessage = "Le format du numéro de téléphone n'est pas valide.")]
+        [Required]
+        [Display(Name = "Indicatif")]
+        public string Indicatif { get; set; } = "+228";
+
+        [Required]
+        [Display(Name = "Téléphone")]
         [StringLength(20)]
-        [Display(Name = "Numéro de téléphone")]
-        public string? Telephone { get; set; }
+        public string NumeroTelephone { get; set; } = string.Empty;
+
+        public List<(string Code, string Pays)> Indicatifs { get; set; } = new();
 
         [StringLength(100)]
         public string? Poste { get; set; }
 
-        [Display(Name = "Employé actif")]
-        public bool EstActif { get; set; } = true;
-
-        [Required]
+        [Required(ErrorMessage = "Le département est obligatoire.")]
         [Display(Name = "Département / agence")]
         public int DepartementId { get; set; }
-        public Departement? Departement { get; set; }
 
-        public ICollection<Affectation> Affectations { get; set; } = new List<Affectation>();
+        public List<Departement> Departements { get; set; } = new();
     }
 }

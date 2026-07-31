@@ -38,6 +38,14 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategorieActif categorie)
         {
+            var existeDeja = await _context.CategoriesActifs
+                .AnyAsync(c => c.Nom.ToLower() == categorie.Nom.ToLower());
+
+            if (existeDeja)
+            {
+                ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(categorie);
@@ -73,6 +81,14 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
+            var existeDeja = await _context.CategoriesActifs
+                .AnyAsync(c => c.Id != categorie.Id && c.Nom.ToLower() == categorie.Nom.ToLower());
+
+            if (existeDeja)
+            {
+                ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(categorie);
@@ -106,5 +122,21 @@ namespace EcoTrack.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+        // GET /CategoriesActifs/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var categorie = await _context.CategoriesActifs
+                .Include(c => c.Actifs)
+                    .ThenInclude(a => a.Departement)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (categorie is null)
+            {
+                return NotFound();
+            }
+
+            return View(categorie);
+        }
     }
+
 }

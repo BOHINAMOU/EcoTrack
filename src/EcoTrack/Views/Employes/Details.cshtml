@@ -1,0 +1,144 @@
+﻿@model EcoTrack.ViewModels.EmployeDetailsViewModel
+@{
+    ViewData["Title"] = "Fiche employé";
+    var employe = Model.Employe;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">@employe.Prenom @employe.Nom</h3>
+        <p class="text-muted mb-0">
+            @(employe.Poste ?? "Poste non renseigné") — @employe.Departement?.Nom
+            @if (!employe.EstActif)
+            {
+                <span class="badge bg-secondary ms-2">Inactif</span>
+            }
+        </p>
+    </div>
+    <div>
+        @if (User.IsInRole("AdminPrincipal"))
+        {
+            <a asp-action="Edit" asp-route-id="@employe.Id" class="btn btn-outline-primary">Modifier les infos</a>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <h6 class="mb-3">Coordonnées</h6>
+            <p class="mb-1"><i class="bi bi-envelope me-2"></i>@(employe.Email ?? "—")</p>
+            <p class="mb-0"><i class="bi bi-telephone me-2"></i>@(employe.Telephone ?? "—")</p>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="stat-card">
+            <h6 class="mb-3">Actifs actuellement attribués (@Model.AffectationsActives.Count)</h6>
+
+            @if (Model.AffectationsActives.Any())
+            {
+                <div class="table-responsive-wrapper">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Actif</th>
+                                <th>Catégorie</th>
+                                <th>Depuis le</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var affectation in Model.AffectationsActives)
+                            {
+                                <tr>
+                                    <td>@affectation.Actif?.Nom (@affectation.Actif?.NumeroSerie)</td>
+                                    <td>@affectation.Actif?.CategorieActif?.Nom</td>
+                                    <td>@affectation.DateAffectation.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">
+                                        <form asp-action="RetirerActif" method="post" class="d-inline"
+                                              onsubmit="return confirm('Retirer cet actif de cet employé ?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="affectationId" value="@affectation.Id" />
+                                            <input type="hidden" name="employeId" value="@employe.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Aucun actif attribué actuellement.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="stat-card mt-4">
+    <h6 class="mb-3">Historique des actifs précédemment détenus</h6>
+    @if (Model.HistoriqueComplet.Any())
+    {
+        <div class="table-responsive-wrapper">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Actif</th>
+                        <th>Numéro de série</th>
+                        <th>Attribué le</th>
+                        <th>Retiré le</th>
+                        <th>Motif du retrait</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ancienneAffectation in Model.HistoriqueComplet)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-controller="Actifs" asp-action="Details" asp-route-id="@ancienneAffectation.ActifId">
+                                    @ancienneAffectation.Actif?.Nom
+                                </a>
+                            </td>
+                            <td>@ancienneAffectation.Actif?.NumeroSerie</td>
+                            <td>@ancienneAffectation.DateAffectation.ToString("dd/MM/yyyy")</td>
+                            <td>@ancienneAffectation.DateRetrait?.ToString("dd/MM/yyyy")</td>
+                            <td>@(ancienneAffectation.Motif ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted mb-0">Aucun actif retiré dans le passé pour cet employé.</p>
+    }
+</div>
+
+<div class="stat-card mt-4">
+    <h6 class="mb-3">Attribuer un nouvel actif</h6>
+    @if (Model.ActifsDisponibles.Any())
+    {
+        <form asp-action="AttribuerActif" method="post" class="d-flex gap-2"
+              onsubmit="this.querySelector('button[type=submit]').disabled = true; return true;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="employeId" value="@employe.Id" />
+            <select name="actifId" class="form-select" required style="max-width: 350px;">
+                <option value="">-- Choisir un actif disponible --</option>
+                @foreach (var actif in Model.ActifsDisponibles)
+                {
+                    <option value="@actif.Id">@actif.Nom (@actif.NumeroSerie)</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-primary">Attribuer</button>
+        </form>
+    }
+    else
+    {
+        <p class="text-muted mb-0">Aucun actif disponible en stock actuellement.</p>
+    }
+</div>

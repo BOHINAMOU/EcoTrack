@@ -1,0 +1,47 @@
+﻿@model EcoTrack.Models.CategorieActif
+@{
+    ViewData["Title"] = "Détails de la catégorie";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">@Model.Nom</h3>
+        <p class="text-muted mb-0">@(Model.Description ?? "Aucune description")</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour à la liste
+    </a>
+</div>
+
+<div class="stat-card mb-4" style="max-width: 260px;">
+    <div class="stat-label">Total des actifs dans cette catégorie</div>
+    <div class="stat-value">@Model.Actifs.Count</div>
+</div>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Numéro de série</th>
+                <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var actif in Model.Actifs.OrderBy(a => a.Nom))
+            {
+                <tr>
+                    <td>@actif.Nom</td>
+                    <td>@actif.NumeroSerie</td>
+                    <td>@actif.Etat</td>
+                </tr>
+            }
+            @if (!Model.Actifs.Any())
+            {
+                <tr>
+                    <td colspan="3" class="text-muted">Aucun actif dans cette catégorie pour l'instant.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
