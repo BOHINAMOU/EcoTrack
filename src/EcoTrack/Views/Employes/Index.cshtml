@@ -15,7 +15,7 @@
 
 <div class="mb-3 position-relative" style="max-width: 400px;">
     <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
-    <input type="text" id="filtreEmployes" class="form-control ps-5" placeholder="Filtrer par nom, département ou poste..." autocomplete="off" />
+    <input type="text" id="filtreEmployes" class="form-control ps-5" placeholder="Filtrer par nom, agence ou poste..." autocomplete="off" />
 </div>
 
 <div class="table-responsive-wrapper">
@@ -23,7 +23,8 @@
         <thead>
             <tr>
                 <th>Nom complet</th>
-                <th>Département</th>
+                <th>Agence</th>
+                <th>Service</th>
                 <th>Poste</th>
                 <th>Actifs attribués</th>
                 <th>Statut</th>
@@ -34,9 +35,10 @@
             @foreach (var employe in Model)
             {
                 <tr class="@(!employe.EstActif ? "table-secondary" : "")"
-                    data-recherche="@($"{employe.Prenom} {employe.Nom} {employe.Departement?.Nom} {employe.Poste}".ToLower())">
+                    data-recherche="@($"{employe.Prenom} {employe.Nom} {employe.Departement?.Nom} {employe.Service?.Nom} {employe.Poste}".ToLower())">
                     <td><a asp-action="Details" asp-route-id="@employe.Id">@employe.Prenom @employe.Nom</a></td>
                     <td>@employe.Departement?.Nom</td>
+                    <td>@employe.Service?.Nom</td>
                     <td>@(employe.Poste ?? "—")</td>
                     <td>@employe.Affectations.Count</td>
                     <td>
@@ -53,18 +55,18 @@
                         @if (User.IsInRole("AdminPrincipal"))
                         {
                             <a asp-action="Edit" asp-route-id="@employe.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            <form asp-action="BasculerActivation" asp-route-id="@employe.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                @if (employe.EstActif)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                                }
+                            </form>
                         }
-                        <form asp-action="BasculerActivation" asp-route-id="@employe.Id" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            @if (employe.EstActif)
-                            {
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
-                            }
-                            else
-                            {
-                                <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
-                            }
-                        </form>
                     </td>
                 </tr>
             }

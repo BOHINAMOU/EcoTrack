@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Inventaire des actifs";
+    var categories = ViewBag.Categories as IEnumerable<EcoTrack.Models.CategorieActif>;
+}
+
+<h3>Inventaire des actifs</h3>
+<p class="text-muted">Liste complète des actifs, filtrable par catégorie et/ou état.</p>
+
+<div class="card p-4" style="max-width: 500px;">
+    <form asp-action="Inventaire" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label class="form-label">Catégorie (optionnel)</label>
+            <select name="categorieId" class="form-select">
+                <option value="">Toutes les catégories</option>
+                @if (categories is not null)
+                {
+                    foreach (var categorie in categories)
+                    {
+                        <option value="@categorie.Id">@categorie.Nom</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">État (optionnel)</label>
+            <select name="etat" class="form-select">
+                <option value="">Tous les états</option>
+                <option value="Disponible">Disponible</option>
+                <option value="Attribue">Attribué</option>
+                <option value="Deteriore">Détérioré</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf"></i> Générer le PDF
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
+    </form>
+</div>

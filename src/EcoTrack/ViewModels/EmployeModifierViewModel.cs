@@ -5,6 +5,11 @@ namespace EcoTrack.ViewModels
 {
     public class EmployeModifierViewModel
     {
+        [Required(ErrorMessage = "Le service est obligatoire.")]
+        [Display(Name = "Service")]
+        public int ServiceId { get; set; }
+
+        public List<Service> Services { get; set; } = new();
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Le nom est obligatoire.")]
@@ -33,8 +38,8 @@ namespace EcoTrack.ViewModels
         [StringLength(100)]
         public string? Poste { get; set; }
 
-        [Required(ErrorMessage = "Le département est obligatoire.")]
-        [Display(Name = "Département / agence")]
+        [Required(ErrorMessage = "L'agence est obligatoire.")]
+        [Display(Name = "Agence")]
         public int DepartementId { get; set; }
 
         public List<Departement> Departements { get; set; } = new();

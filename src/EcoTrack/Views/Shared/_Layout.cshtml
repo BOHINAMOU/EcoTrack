@@ -33,7 +33,6 @@
                         <a asp-controller="Employes" asp-action="Index">Liste des employés</a>
                         <a asp-controller="Employes" asp-action="Create">Nouvel employé</a>
                         <a asp-controller="Employes" asp-action="Rechercher">Rechercher un employé</a>
-                        <a asp-controller="Rapports" asp-action="Employe">Rapport d'un employé</a>
                     </div>
 
                     <div class="nav-link nav-group-toggle" data-cible="sousMenuActifs">
@@ -48,23 +47,38 @@
                     </div>
 
                     <a asp-controller="Departements" asp-action="Index" class="nav-link">
-                        <i class="bi bi-building"></i> Départements / agences
+                        <i class="bi bi-building"></i> Agences
                     </a>
-                    <a asp-controller="CategoriesActifs" asp-action="Index" class="nav-link">
-                        <i class="bi bi-tags"></i> Catégories d'actifs
-                    </a>
+                     <div class="nav-link nav-group-toggle" data-cible="sousMenuOrganisation">
+                        <span><i class="bi bi-diagram-3"></i> Catégories & Services</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="nav-submenu" id="sousMenuOrganisation">
+                        <a asp-controller="CategoriesActifs" asp-action="Index">Catégories d'actifs</a>
+                        <a asp-controller="Services" asp-action="Index">Services</a>
+                    </div>
                     <a asp-controller="Rapports" asp-action="Index" class="nav-link">
                         <i class="bi bi-file-earmark-pdf"></i> Rapports
                     </a>
+
                     @if (User.IsInRole("AdminPrincipal"))
                     {
-                        <a asp-controller="Utilisateurs" asp-action="Index" class="nav-link">
-                            <i class="bi bi-person-gear"></i> Gestion des utilisateurs
-                        </a>
+                        <div class="nav-link nav-group-toggle" data-cible="sousMenuUtilisateurs">
+                            <span><i class="bi bi-person-gear"></i> Gestion des utilisateurs</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                        <div class="nav-submenu" id="sousMenuUtilisateurs">
+                            <a asp-controller="Utilisateurs" asp-action="Index">Voir tous les utilisateurs</a>
+                            <a asp-controller="Utilisateurs" asp-action="Create">Nouvel admin secondaire</a>
+                            <a asp-controller="Utilisateurs" asp-action="Actions">Actions des utilisateurs</a>
+                        </div>
                     }
                 </nav>
 
                 <div class="sidebar-footer">
+                    <a asp-controller="Compte" asp-action="Profil" class="btn btn-outline-light btn-sm w-100 mb-2">
+                        <i class="bi bi-person-circle"></i> Mon profil
+                    </a>
                     <form asp-controller="Compte" asp-action="Deconnexion" method="post">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-outline-light btn-sm w-100">
@@ -123,6 +137,7 @@
 
         overlay?.addEventListener('click', fermerSidebar);
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>

@@ -27,7 +27,24 @@ namespace EcoTrack.Controllers
             return View(categories);
         }
 
+        // GET /CategoriesActifs/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var categorie = await _context.CategoriesActifs
+                .Include(c => c.Actifs)
+                    .ThenInclude(a => a.Departement)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (categorie is null)
+            {
+                return NotFound();
+            }
+
+            return View(categorie);
+        }
+
         // GET /CategoriesActifs/Create
+        [Authorize(Roles = "AdminPrincipal")]
         public IActionResult Create()
         {
             return View();
@@ -35,6 +52,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/Create
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategorieActif categorie)
         {
@@ -59,6 +77,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /CategoriesActifs/Edit/5
+        [Authorize(Roles = "AdminPrincipal")]
         public async Task<IActionResult> Edit(int id)
         {
             var categorie = await _context.CategoriesActifs.FindAsync(id);
@@ -73,6 +92,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/Edit/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CategorieActif categorie)
         {
@@ -103,6 +123,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/BasculerActivation/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {
@@ -122,21 +143,5 @@ namespace EcoTrack.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-        // GET /CategoriesActifs/Details/5
-        public async Task<IActionResult> Details(int id)
-        {
-            var categorie = await _context.CategoriesActifs
-                .Include(c => c.Actifs)
-                    .ThenInclude(a => a.Departement)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (categorie is null)
-            {
-                return NotFound();
-            }
-
-            return View(categorie);
-        }
     }
-
 }

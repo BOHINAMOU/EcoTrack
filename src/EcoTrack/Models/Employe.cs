@@ -5,6 +5,10 @@ namespace EcoTrack.Models
     public class Employe
     {
         public int Id { get; set; }
+        [Required(ErrorMessage = "Le service est obligatoire.")]
+        [Display(Name = "Service")]
+        public int ServiceId { get; set; }
+        public Service? Service { get; set; }
 
         [Required(ErrorMessage = "Le nom est obligatoire.")]
         [StringLength(100)]
@@ -30,7 +34,7 @@ namespace EcoTrack.Models
         public bool EstActif { get; set; } = true;
 
         [Required]
-        [Display(Name = "Département / agence")]
+        [Display(Name = "Agence")]
         public int DepartementId { get; set; }
         public Departement? Departement { get; set; }
 

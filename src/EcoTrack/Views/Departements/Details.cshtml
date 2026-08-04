@@ -61,7 +61,7 @@
 
     <div class="col-md-7">
         <div class="stat-card">
-            <h6 class="mb-3">Dernières affectations du département</h6>
+            <h6 class="mb-3">Dernières affectations dans l'agence</h6>
             @if (Model.DernieresAffectations.Any())
             {
                 <ul class="list-group">
@@ -82,7 +82,7 @@
             }
             else
             {
-                <p class="text-muted mb-0">Aucune affectation enregistrée pour ce département.</p>
+                <p class="text-muted mb-0">Aucune affectation enregistrée pour cette agence.</p>
             }
         </div>
     </div>
@@ -130,7 +130,7 @@
             @if (!departement.Employes.Any())
             {
                 <tr>
-                    <td colspan="3" class="text-muted">Aucun employé dans ce département.</td>
+                    <td colspan="3" class="text-muted">Aucun employé dans cette agence.</td>
                 </tr>
             }
         </tbody>

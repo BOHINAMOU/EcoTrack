@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "Rapport par employé";
+    var employes = ViewBag.Employes as IEnumerable<dynamic>;
+}
+
+<h3>Rapport par employé</h3>
+<p class="text-muted">Fiche complète (actifs actuels + historique) d'un employé ou de tous les employés.</p>
+
+<div class="card p-4" style="max-width: 500px;">
+    <form asp-action="Employe" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="modeRapport" id="modeTous" value="tous" checked />
+                <label class="form-check-label" for="modeTous">Tous les employés</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="modeRapport" id="modeUn" value="un" />
+                <label class="form-check-label" for="modeUn">Un employé précis</label>
+            </div>
+        </div>
+
+        <div class="mb-3" id="blocEmploye" style="display:none;">
+            <label class="form-label">Employé</label>
+            <select name="employeId" id="selectEmploye" class="form-select">
+                <option value="">-- Choisir --</option>
+                @if (employes is not null)
+                {
+                    foreach (var e in employes)
+                    {
+                        <option value="@e.Id">@e.NomComplet</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf"></i> Générer le PDF
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    var modeTous = document.getElementById('modeTous');
+    var modeUn = document.getElementById('modeUn');
+    var blocEmploye = document.getElementById('blocEmploye');
+    var selectEmploye = document.getElementById('selectEmploye');
+
+    function basculer() {
+        var estUn = modeUn.checked;
+        blocEmploye.style.display = estUn ? '' : 'none';
+        selectEmploye.disabled = !estUn;
+        if (!estUn) { selectEmploye.value = ''; }
+    }
+
+    modeTous.addEventListener('change', basculer);
+    modeUn.addEventListener('change', basculer);
+    basculer();
+</script>
+}

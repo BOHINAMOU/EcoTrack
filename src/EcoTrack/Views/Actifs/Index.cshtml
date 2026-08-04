@@ -18,7 +18,7 @@
     <a asp-action="Index" class="btn btn-sm @(filtre == null ? "btn-primary" : "btn-outline-secondary")">Tous</a>
     <a asp-action="Index" asp-route-etat="Disponible" class="btn btn-sm @(filtre == "Disponible" ? "btn-primary" : "btn-outline-secondary")">Disponibles</a>
     <a asp-action="Index" asp-route-etat="Attribue" class="btn btn-sm @(filtre == "Attribue" ? "btn-primary" : "btn-outline-secondary")">Attribués</a>
-    <a asp-action="Index" asp-route-etat="Detruit" class="btn btn-sm @(filtre == "Detruit" ? "btn-primary" : "btn-outline-secondary")">Détruits</a>
+    <a asp-action="Index" asp-route-etat="Deteriore" class="btn btn-sm @(filtre == "Deteriore" ? "btn-primary" : "btn-outline-secondary")">Détériorés</a>
 </div>
 
 <div class="table-responsive-wrapper">
@@ -50,8 +50,8 @@
                             case EcoTrack.Enums.EtatActif.Attribue:
                                 <span class="badge" style="background-color: var(--ecotrack-bleu);">Attribué</span>
                                 break;
-                            case EcoTrack.Enums.EtatActif.Detruit:
-                                <span class="badge bg-danger">Détruit</span>
+                            case EcoTrack.Enums.EtatActif.Deteriore:
+                                <span class="badge bg-danger">Détérioré</span>
                                 break;
                         }
                     </td>
@@ -69,20 +69,23 @@
                     </td>
                     <td class="text-end">
                         <a asp-action="Edit" asp-route-id="@actif.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
-                        @if (actif.Etat == EcoTrack.Enums.EtatActif.Disponible)
+                        @if (User.IsInRole("AdminPrincipal"))
                         {
-                            <form asp-action="MarquerDetruit" asp-route-id="@actif.Id" method="post" class="d-inline"
-                                  onsubmit="return confirm('Marquer cet actif comme détruit ?');">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Détruire</button>
-                            </form>
-                        }
-                        @if (actif.Etat == EcoTrack.Enums.EtatActif.Detruit)
-                        {
-                            <form asp-action="Reactiver" asp-route-id="@actif.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
-                            </form>
+                            @if (actif.Etat == EcoTrack.Enums.EtatActif.Disponible)
+                            {
+                                <form asp-action="MarquerDeteriore" asp-route-id="@actif.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Marquer cet actif comme détérioré ?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Détériorer</button>
+                                </form>
+                            }
+                            @if (actif.Etat == EcoTrack.Enums.EtatActif.Deteriore)
+                            {
+                                <form asp-action="Reactiver" asp-route-id="@actif.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                                </form>
+                            }
                         }
                     </td>
                 </tr>

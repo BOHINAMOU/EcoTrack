@@ -36,9 +36,14 @@ namespace EcoTrack.ViewModels
         [StringLength(100)]
         public string? Poste { get; set; }
 
-        [Required(ErrorMessage = "Le département est obligatoire.")]
-        [Display(Name = "Département / agence")]
+        [Required(ErrorMessage = "L'agence est obligatoire.")]
+        [Display(Name = "Agence")]
         public int DepartementId { get; set; }
+        [Required(ErrorMessage = "Le service est obligatoire.")]
+        [Display(Name = "Service")]
+        public int ServiceId { get; set; }
+
+        public List<Service> Services { get; set; } = new();
 
         [Required]
         [Display(Name = "Mode d'attribution")]

@@ -34,7 +34,7 @@ namespace EcoTrack.Models
         public int CategorieActifId { get; set; }
         public CategorieActif? CategorieActif { get; set; }
 
-        [Display(Name = "Département / agence")]
+        [Display(Name = "Agence")]
         public int? DepartementId { get; set; }
         public Departement? Departement { get; set; }
 

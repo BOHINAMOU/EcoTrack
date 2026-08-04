@@ -1,0 +1,35 @@
+﻿@model EcoTrack.Models.Service
+@{
+    ViewData["Title"] = "Nouveau service";
+}
+
+<h3>Nouveau service</h3>
+
+<div class="card p-4" style="max-width: 500px;">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Nom" class="form-label"></label>
+            <input asp-for="Nom" class="form-control" />
+            <span asp-validation-for="Nom" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DepartementId" class="form-label">Agence</label>
+            <select asp-for="DepartementId" class="form-select"
+                    asp-items="@(new SelectList((IEnumerable<EcoTrack.Models.Departement>)ViewBag.Agences, "Id", "Nom"))">
+                <option value="">-- Choisir --</option>
+            </select>
+            <span asp-validation-for="DepartementId" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Créer</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

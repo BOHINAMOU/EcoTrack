@@ -1,0 +1,102 @@
+﻿@model IEnumerable<EcoTrack.Models.Service>
+@{
+    ViewData["Title"] = "Services";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Services</h3>
+        <p class="text-muted mb-0">@Model.Count() service(s) enregistré(s)</p>
+    </div>
+    @if (User.IsInRole("AdminPrincipal"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Nouveau service
+        </a>
+    }
+</div>
+
+<div class="mb-3 position-relative" style="max-width: 400px;">
+    <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
+    <input type="text" id="filtreServices" class="form-control ps-5" placeholder="Filtrer par nom ou agence..." autocomplete="off" />
+</div>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover" id="tableServices">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Agence</th>
+                <th>Employés</th>
+                <th>Statut</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var service in Model)
+            {
+                <tr class="@(!service.EstActif ? "table-secondary" : "")"
+                    data-recherche="@($"{service.Nom} {service.Departement?.Nom}".ToLower())">
+                    <td>@service.Nom</td>
+                    <td>@service.Departement?.Nom</td>
+                    <td>@service.Employes.Count</td>
+                    <td>
+                        @if (service.EstActif)
+                        {
+                            <span class="badge bg-success">Actif</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Désactivé</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (User.IsInRole("AdminPrincipal"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@service.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            <form asp-action="BasculerActivation" asp-route-id="@service.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                @if (service.EstActif)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                                }
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<p id="aucunResultatServices" class="text-muted" style="display:none;">Aucun service ne correspond à votre recherche.</p>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">Aucun service enregistré pour l'instant.</p>
+}
+
+@section Scripts {
+<script>
+    var champFiltre = document.getElementById('filtreServices');
+    var lignes = document.querySelectorAll('#tableServices tbody tr');
+    var messageAucunResultat = document.getElementById('aucunResultatServices');
+
+    champFiltre.addEventListener('input', function () {
+        var terme = champFiltre.value.trim().toLowerCase();
+        var nombreVisibles = 0;
+
+        lignes.forEach(function (ligne) {
+            var correspond = ligne.dataset.recherche.indexOf(terme) !== -1;
+            ligne.style.display = correspond ? '' : 'none';
+            if (correspond) { nombreVisibles++; }
+        });
+
+        messageAucunResultat.style.display = nombreVisibles === 0 ? '' : 'none';
+    });
+</script>
+}

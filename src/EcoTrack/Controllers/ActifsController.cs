@@ -1,22 +1,27 @@
 ﻿using EcoTrack.Data;
 using EcoTrack.Enums;
+using EcoTrack.Infrastructure;
 using EcoTrack.Models;
 using EcoTrack.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using System.Security.Claims;
 namespace EcoTrack.Controllers
 {
     [Authorize]
     public class ActifsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IJournalService _journal;
 
-        public ActifsController(ApplicationDbContext context)
+        public ActifsController(ApplicationDbContext context, IJournalService journal)
         {
             _context = context;
+            _journal = journal;
         }
+
+        private string UtilisateurConnecteId => User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? string.Empty;
 
         // GET /Actifs?etat=Disponible
         public async Task<IActionResult> Index(string? etat)
@@ -53,10 +58,25 @@ namespace EcoTrack.Controllers
             var historique = await _context.Affectations
                 .Include(af => af.Employe)
                 .Where(af => af.ActifId == id)
-                .OrderByDescending(af => af.DateAffectation)
+                .OrderBy(af => af.DateAffectation)
                 .ToListAsync();
 
-            ViewBag.Historique = historique;
+            var lignes = historique.Select((aff, index) =>
+            {
+                var precedente = index > 0 ? historique[index - 1] : null;
+
+                return new HistoriqueLigneViewModel
+                {
+                    Affectation = aff,
+                    EstReattribution = precedente is not null,
+                    DetenteurPrecedentNom = precedente is not null ? $"{precedente.Employe?.Prenom} {precedente.Employe?.Nom}" : null,
+                    MemeEmployeQuAvant = precedente is not null && precedente.EmployeId == aff.EmployeId
+                };
+            })
+            .OrderByDescending(l => l.Affectation.DateAffectation)
+            .ToList();
+
+            ViewBag.Historique = lignes;
             return View(actif);
         }
 
@@ -76,8 +96,10 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ActifFormViewModel model)
         {
-            var existeDeja = await _context.Actifs
-                .AnyAsync(a => a.NumeroSerie.ToLower() == model.NumeroSerie.ToLower());
+            var numeroSerieNormalise = (model.NumeroSerie ?? string.Empty).Trim().ToLower();
+
+            var existeDeja = !string.IsNullOrWhiteSpace(numeroSerieNormalise)
+                && await _context.Actifs.AnyAsync(a => a.NumeroSerie.ToLower() == numeroSerieNormalise);
 
             if (existeDeja)
             {
@@ -96,13 +118,16 @@ namespace EcoTrack.Controllers
                 NumeroSerie = model.NumeroSerie,
                 Marque = model.Marque,
                 Modele = model.Modele,
-                DateAcquisition = model.DateAcquisition,
+                DateAcquisition = DateTime.SpecifyKind(model.DateAcquisition, DateTimeKind.Utc),
                 CategorieActifId = model.CategorieActifId,
                 Etat = EtatActif.Disponible
             };
 
             _context.Actifs.Add(actif);
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "CreationActif",
+                $"A enregistré un nouvel actif \"{actif.Nom}\" (N° série : {actif.NumeroSerie})");
 
             TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été enregistré et est disponible.";
             return RedirectToAction(nameof(Index));
@@ -142,8 +167,10 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            var existeDeja = await _context.Actifs
-                .AnyAsync(a => a.Id != model.Id && a.NumeroSerie.ToLower() == model.NumeroSerie.ToLower());
+            var numeroSerieNormalise = (model.NumeroSerie ?? string.Empty).Trim().ToLower();
+
+            var existeDeja = !string.IsNullOrWhiteSpace(numeroSerieNormalise)
+                && await _context.Actifs.AnyAsync(a => a.Id != model.Id && a.NumeroSerie.ToLower() == numeroSerieNormalise);
 
             if (existeDeja)
             {
@@ -162,24 +189,27 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            // On ne touche jamais à Etat ici : ça reste géré uniquement par les actions d'attribution/destruction.
             actif.Nom = model.Nom;
             actif.NumeroSerie = model.NumeroSerie;
             actif.Marque = model.Marque;
             actif.Modele = model.Modele;
-            actif.DateAcquisition = model.DateAcquisition;
+            actif.DateAcquisition = DateTime.SpecifyKind(model.DateAcquisition, DateTimeKind.Utc);
             actif.CategorieActifId = model.CategorieActifId;
 
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "ModificationActif",
+                $"A modifié l'actif \"{actif.Nom}\" (N° série : {actif.NumeroSerie})");
 
             TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été modifié.";
             return RedirectToAction(nameof(Index));
         }
 
-        // POST /Actifs/MarquerDetruit/5
+        // POST /Actifs/MarquerDeteriore/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MarquerDetruit(int id)
+        public async Task<IActionResult> MarquerDeteriore(int id)
         {
             var actif = await _context.Actifs.FindAsync(id);
             if (actif is null)
@@ -189,19 +219,23 @@ namespace EcoTrack.Controllers
 
             if (actif.Etat == EtatActif.Attribue)
             {
-                TempData["Erreur"] = "Impossible de marquer cet actif comme détruit : il est actuellement attribué à un employé. Retirez-le d'abord.";
+                TempData["Erreur"] = "Impossible de marquer cet actif comme détérioré : il est actuellement attribué à un employé. Retirez-le d'abord.";
                 return RedirectToAction(nameof(Index));
             }
 
-            actif.Etat = EtatActif.Detruit;
+            actif.Etat = EtatActif.Deteriore;
             await _context.SaveChangesAsync();
 
-            TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été marqué comme détruit.";
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "DeteriorationActif",
+                $"A marqué l'actif \"{actif.Nom}\" comme détérioré");
+
+            TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été marqué comme détérioré.";
             return RedirectToAction(nameof(Index));
         }
 
         // POST /Actifs/Reactiver/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Reactiver(int id)
         {
@@ -211,13 +245,16 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            if (actif.Etat != EtatActif.Detruit)
+            if (actif.Etat != EtatActif.Deteriore)
             {
                 return RedirectToAction(nameof(Index));
             }
 
             actif.Etat = EtatActif.Disponible;
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "ReactivationActif",
+                $"A remis l'actif \"{actif.Nom}\" disponible");
 
             TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été remis disponible.";
             return RedirectToAction(nameof(Index));

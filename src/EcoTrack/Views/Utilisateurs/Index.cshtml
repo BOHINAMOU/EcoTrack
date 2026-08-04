@@ -1,0 +1,84 @@
+﻿@model List<(EcoTrack.Models.ApplicationUser Utilisateur, string Role)>
+@{
+    ViewData["Title"] = "Gestion des utilisateurs";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Gestion des utilisateurs</h3>
+        <p class="text-muted mb-0">@Model.Count utilisateur(s)</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> Nouvel admin secondaire
+    </a>
+</div>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Nom d'utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (utilisateur, role) in Model)
+            {
+                var estAdminPrincipal = role == "AdminPrincipal";
+
+                <tr>
+                    <td>@utilisateur.Prenom @utilisateur.Nom</td>
+                    <td>@utilisateur.UserName</td>
+                    <td>@utilisateur.Email</td>
+                    <td>
+                        @if (estAdminPrincipal)
+                        {
+                            <span class="badge" style="background-color: var(--ecotrack-bleu);">Admin principal</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Admin secondaire</span>
+                        }
+                    </td>
+                    <td>
+                        @if (utilisateur.LockoutEnd is not null && utilisateur.LockoutEnd > DateTimeOffset.UtcNow)
+                        {
+                            <span class="badge bg-secondary">Désactivé</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Actif</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (!estAdminPrincipal)
+                        {
+                            <a asp-action="Actions" asp-route-utilisateurId="@utilisateur.Id" class="btn btn-sm btn-outline-secondary">Historique</a>
+                            <a asp-action="Edit" asp-route-id="@utilisateur.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            <form asp-action="ReinitialiserMotDePasse" asp-route-id="@utilisateur.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Générer un nouveau mot de passe pour cet utilisateur ?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-warning">Réinitialiser mdp</button>
+                            </form>
+                            <form asp-action="BasculerActivation" asp-route-id="@utilisateur.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                @if (utilisateur.LockoutEnd is not null && utilisateur.LockoutEnd > DateTimeOffset.UtcNow)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                                }
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

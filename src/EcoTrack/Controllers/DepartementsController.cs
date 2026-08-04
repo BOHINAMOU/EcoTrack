@@ -88,6 +88,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /Departements/Create
+        [Authorize(Roles = "AdminPrincipal")]
         public IActionResult Create()
         {
             return View();
@@ -95,6 +96,7 @@ namespace EcoTrack.Controllers
 
         // POST /Departements/Create
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Departement departement)
         {
@@ -119,6 +121,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /Departements/Edit/5
+        [Authorize(Roles = "AdminPrincipal")]
         public async Task<IActionResult> Edit(int id)
         {
             var departement = await _context.Departements.FindAsync(id);
@@ -133,6 +136,7 @@ namespace EcoTrack.Controllers
 
         // POST /Departements/Edit/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Departement departement)
         {
@@ -163,6 +167,7 @@ namespace EcoTrack.Controllers
 
         // POST /Departements/BasculerActivation/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {

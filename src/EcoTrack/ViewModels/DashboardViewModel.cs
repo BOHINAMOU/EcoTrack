@@ -8,6 +8,6 @@
         public int NombreEmployes { get; set; }
         public int NombreActifsDisponibles { get; set; }
         public int NombreActifsAttribues { get; set; }
-        public int NombreActifsDetruits { get; set; }
+        public int NombreActifsDeteriores { get; set; }
     }
 }

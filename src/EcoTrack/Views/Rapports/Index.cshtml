@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Rapports";
+}
+
+<h3 class="mb-1">Rapports</h3>
+<p class="text-muted mb-4">Générez un rapport PDF selon le type d'information souhaité.</p>
+
+<h5 class="mb-3"><i class="bi bi-people me-2"></i>Rapports sur les employés</h5>
+<div class="row g-3 mb-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card h-100">
+            <div class="stat-icon mb-3" style="width:48px;height:48px;border-radius:12px;background:#e6f4ea;color:#2e8540;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                <i class="bi bi-person-lines-fill"></i>
+            </div>
+            <h6>Rapport par employé</h6>
+            <p class="text-muted small">Fiche complète d'un employé ou de tous les employés.</p>
+            <a asp-action="Employe" class="btn btn-outline-primary btn-sm">Générer</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card h-100">
+            <div class="stat-icon mb-3" style="width:48px;height:48px;border-radius:12px;background:#eef2f7;color:var(--ecotrack-bleu);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                <i class="bi bi-building"></i>
+            </div>
+            <h6>Rapport par agence ou service</h6>
+            <p class="text-muted small">Employés et actifs d'une agence entière, ou d'un service précis.</p>
+            <a asp-action="Departement" class="btn btn-outline-primary btn-sm">Générer</a>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3"><i class="bi bi-laptop me-2"></i>Rapports sur les actifs</h5>
+<div class="row g-3">
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card h-100">
+            <div class="stat-icon mb-3" style="width:48px;height:48px;border-radius:12px;background:#e6f4ea;color:#2e8540;display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                <i class="bi bi-boxes"></i>
+            </div>
+            <h6>Inventaire des actifs</h6>
+            <p class="text-muted small">Tous les actifs, filtrables par catégorie et par état.</p>
+            <a asp-action="Inventaire" class="btn btn-outline-primary btn-sm">Générer</a>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-4">
+        <div class="stat-card h-100">
+            <div class="stat-icon mb-3" style="width:48px;height:48px;border-radius:12px;background:#eef2f7;color:var(--ecotrack-bleu);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+                <i class="bi bi-calendar-range"></i>
+            </div>
+            <h6>Rapport par plage de dates</h6>
+            <p class="text-muted small">Actifs acquis et affectations survenues entre deux dates.</p>
+            <a asp-action="PlageDates" class="btn btn-outline-primary btn-sm">Générer</a>
+        </div>
+    </div>
+</div>

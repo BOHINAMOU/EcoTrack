@@ -273,6 +273,9 @@ namespace EcoTrack.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Telephone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -281,7 +284,67 @@ namespace EcoTrack.Migrations
 
                     b.HasIndex("DepartementId");
 
+                    b.HasIndex("ServiceId");
+
                     b.ToTable("Employes");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.JournalAction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DateAction")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("TypeAction")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UtilisateurId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtilisateurId");
+
+                    b.ToTable("JournalActions");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Service", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DepartementId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EstActif")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartementId");
+
+                    b.ToTable("Services");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -461,6 +524,36 @@ namespace EcoTrack.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("EcoTrack.Models.Service", "Service")
+                        .WithMany("Employes")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Departement");
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.JournalAction", b =>
+                {
+                    b.HasOne("EcoTrack.Models.ApplicationUser", "Utilisateur")
+                        .WithMany()
+                        .HasForeignKey("UtilisateurId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Utilisateur");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Service", b =>
+                {
+                    b.HasOne("EcoTrack.Models.Departement", "Departement")
+                        .WithMany("Services")
+                        .HasForeignKey("DepartementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Departement");
                 });
 
@@ -530,11 +623,18 @@ namespace EcoTrack.Migrations
                     b.Navigation("Actifs");
 
                     b.Navigation("Employes");
+
+                    b.Navigation("Services");
                 });
 
             modelBuilder.Entity("EcoTrack.Models.Employe", b =>
                 {
                     b.Navigation("Affectations");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Service", b =>
+                {
+                    b.Navigation("Employes");
                 });
 #pragma warning restore 612, 618
         }

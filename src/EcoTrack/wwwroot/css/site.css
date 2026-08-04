@@ -362,3 +362,13 @@ body {
     .search-results-dropdown .search-item small {
         color: #6b7280;
     }
+/* Aligne proprement les groupes de boutons/formulaires dans les cellules d'actions des tableaux */
+.table td.text-end form {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.table td.text-end .btn {
+    vertical-align: middle;
+    margin-bottom: 2px;
+}

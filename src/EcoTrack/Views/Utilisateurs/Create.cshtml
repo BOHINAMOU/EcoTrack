@@ -1,0 +1,45 @@
+﻿@model EcoTrack.ViewModels.UtilisateurCreerViewModel
+@{
+    ViewData["Title"] = "Nouvel administrateur";
+}
+
+<h3>Nouvel administrateur secondaire</h3>
+<p class="text-muted">Un mot de passe temporaire sera généré automatiquement et envoyé par email.</p>
+
+<div class="card p-4" style="max-width: 500px;">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Nom" class="form-label"></label>
+            <input asp-for="Nom" class="form-control" />
+            <span asp-validation-for="Nom" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Prenom" class="form-label"></label>
+            <input asp-for="Prenom" class="form-control" />
+            <span asp-validation-for="Prenom" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="NomUtilisateur" class="form-label"></label>
+            <input asp-for="NomUtilisateur" class="form-control" />
+            <span asp-validation-for="NomUtilisateur" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Créer et envoyer les identifiants</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,106 @@
+﻿@model EcoTrack.Controllers.PlageDatesViewModel
+@{
+    ViewData["Title"] = "Rapport par plage de dates";
+}
+
+<h3>Rapport par plage de dates</h3>
+<p class="text-muted">Inclut les actifs acquis et les affectations survenues entre les deux dates. Filtrez par employé si besoin.</p>
+
+<div class="card p-4" style="max-width: 500px;">
+    <form asp-action="PlageDates" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="DateDebut" class="form-label"></label>
+                <input asp-for="DateDebut" class="form-control" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="DateFin" class="form-label"></label>
+                <input asp-for="DateFin" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mb-3 position-relative">
+            <label class="form-label">Filtrer par employé (optionnel)</label>
+            <input type="text" id="rechercheEmploye" class="form-control" placeholder="Tapez un nom..." autocomplete="off" />
+            <input type="hidden" asp-for="EmployeId" id="employeIdCache" />
+            <div id="resultatsEmploye" class="search-results-dropdown" style="display:none;"></div>
+            <div id="employeChoisi" class="mt-2" style="display:none;">
+                <span class="badge bg-primary" id="badgeEmploye"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger" id="btnRetirerEmploye">Retirer le filtre</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf"></i> Générer le PDF
+        </button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    var champRecherche = document.getElementById('rechercheEmploye');
+    var zoneResultats = document.getElementById('resultatsEmploye');
+    var champIdCache = document.getElementById('employeIdCache');
+    var zoneChoisi = document.getElementById('employeChoisi');
+    var badgeEmploye = document.getElementById('badgeEmploye');
+    var btnRetirer = document.getElementById('btnRetirerEmploye');
+    var minuteur;
+
+    champRecherche.addEventListener('input', function () {
+        clearTimeout(minuteur);
+        var terme = champRecherche.value.trim();
+
+        if (terme.length < 2) {
+            zoneResultats.style.display = 'none';
+            return;
+        }
+
+        minuteur = setTimeout(function () {
+            fetch('/Employes/RechercherJson?terme=' + encodeURIComponent(terme))
+                .then(function (reponse) { return reponse.json(); })
+                .then(function (resultats) { afficherResultats(resultats); });
+        }, 300);
+    });
+
+    function afficherResultats(resultats) {
+        if (resultats.length === 0) {
+            zoneResultats.innerHTML = '<div class="p-2 text-muted">Aucun résultat.</div>';
+            zoneResultats.style.display = 'block';
+            return;
+        }
+
+        var html = '';
+        resultats.forEach(function (e) {
+            html += '<a href="#" class="search-item" data-id="' + e.id + '" data-nom="' + e.nomComplet + '">' + e.nomComplet + '</a>';
+        });
+        zoneResultats.innerHTML = html;
+        zoneResultats.style.display = 'block';
+
+        zoneResultats.querySelectorAll('.search-item').forEach(function (lien) {
+            lien.addEventListener('click', function (evenement) {
+                evenement.preventDefault();
+                champIdCache.value = lien.dataset.id;
+                badgeEmploye.textContent = lien.dataset.nom;
+                zoneChoisi.style.display = 'block';
+                champRecherche.value = '';
+                zoneResultats.style.display = 'none';
+            });
+        });
+    }
+
+    btnRetirer.addEventListener('click', function () {
+        champIdCache.value = '';
+        zoneChoisi.style.display = 'none';
+    });
+
+    document.addEventListener('click', function (evenement) {
+        if (!champRecherche.contains(evenement.target) && !zoneResultats.contains(evenement.target)) {
+            zoneResultats.style.display = 'none';
+        }
+    });
+</script>
+}

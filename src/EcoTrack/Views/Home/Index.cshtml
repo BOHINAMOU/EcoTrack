@@ -2,7 +2,7 @@
 @{
     ViewData["Title"] = "Tableau de bord";
     var initiales = $"{Model.PrenomUtilisateur.FirstOrDefault()}{Model.NomUtilisateur.FirstOrDefault()}".ToUpper();
-    var totalActifs = Model.NombreActifsDisponibles + Model.NombreActifsAttribues + Model.NombreActifsDetruits;
+    var totalActifs = Model.NombreActifsDisponibles + Model.NombreActifsAttribues + Model.NombreActifsDeteriores;
 }
 
 <div class="dashboard-hero">
@@ -65,13 +65,13 @@
             {
                 var pctDispo = Math.Round(Model.NombreActifsDisponibles * 100.0 / totalActifs, 1);
                 var pctAttrib = Math.Round(Model.NombreActifsAttribues * 100.0 / totalActifs, 1);
-                var pctDetruit = Math.Round(Model.NombreActifsDetruits * 100.0 / totalActifs, 1);
+                var pctDeteriore = Math.Round(Model.NombreActifsDeteriores * 100.0 / totalActifs, 1);
 
                 <canvas id="graphiqueEtatsActifs" style="max-height: 240px;"></canvas>
                 <div class="d-flex justify-content-around mt-3" style="font-size: 0.85rem;">
                     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2e8540;margin-right:6px;"></span>Disponibles (@pctDispo %)</span>
                     <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0d3b66;margin-right:6px;"></span>Attribués (@pctAttrib %)</span>
-                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d9534f;margin-right:6px;"></span>Détruits (@pctDetruit %)</span>
+                    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d9534f;margin-right:6px;"></span>Détériorés (@pctDeteriore %)</span>
                 </div>
             }
             else
@@ -92,7 +92,7 @@
                     <i class="bi bi-plus-circle me-2"></i> Nouvel actif
                 </a>
                 <a asp-controller="Departements" asp-action="Index" class="btn btn-outline-secondary text-start">
-                    <i class="bi bi-building me-2"></i> Voir les départements
+                    <i class="bi bi-building me-2"></i> Voir les agences
                 </a>
             </div>
         </div>
@@ -102,14 +102,14 @@
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-    const ctxEtats = document.getElementById('graphiqueEtatsActifs');
+    var ctxEtats = document.getElementById('graphiqueEtatsActifs');
     if (ctxEtats) {
         new Chart(ctxEtats, {
             type: 'doughnut',
             data: {
-                labels: ['Disponibles', 'Attribués', 'Détruits'],
+                labels: ['Disponibles', 'Attribués', 'Détériorés'],
                 datasets: [{
-                    data: [@Model.NombreActifsDisponibles, @Model.NombreActifsAttribues, @Model.NombreActifsDetruits],
+                    data: [@Model.NombreActifsDisponibles, @Model.NombreActifsAttribues, @Model.NombreActifsDeteriores],
                     backgroundColor: ['#2e8540', '#0d3b66', '#d9534f']
                 }]
             },

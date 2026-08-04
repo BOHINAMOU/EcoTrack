@@ -32,12 +32,11 @@ namespace EcoTrack.Controllers
                 NombreEmployes = await _context.Employes.CountAsync(e => e.EstActif),
                 NombreActifsDisponibles = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Disponible),
                 NombreActifsAttribues = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Attribue),
-                NombreActifsDetruits = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Detruit)
+                NombreActifsDeteriores = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Deteriore)
             };
 
             return View(viewModel);
         }
-
 
         // GET /Home/Rechercher?terme=...
         [HttpGet]

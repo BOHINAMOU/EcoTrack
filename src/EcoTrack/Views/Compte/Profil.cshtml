@@ -1,0 +1,54 @@
+﻿@model EcoTrack.ViewModels.ProfilViewModel
+@{
+    ViewData["Title"] = "Mon profil";
+}
+
+<h3>Mon profil</h3>
+<p class="text-muted">Modifiez vos informations personnelles.</p>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">Mes informations</h5>
+            <form asp-action="Profil" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Nom" class="form-label"></label>
+                    <input asp-for="Nom" class="form-control" />
+                    <span asp-validation-for="Nom" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Prenom" class="form-label"></label>
+                    <input asp-for="Prenom" class="form-control" />
+                    <span asp-validation-for="Prenom" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NomUtilisateur" class="form-label"></label>
+                    <input asp-for="NomUtilisateur" class="form-control" />
+                    <span asp-validation-for="NomUtilisateur" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="mb-3">Mot de passe</h5>
+            <p class="text-muted small">Pour changer votre mot de passe, vous devrez saisir l'actuel puis le nouveau.</p>
+            <a asp-action="ChangerMotDePasse" class="btn btn-outline-primary">Changer mon mot de passe</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

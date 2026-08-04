@@ -1,10 +1,12 @@
 ﻿using EcoTrack.Data;
 using EcoTrack.Enums;
+using EcoTrack.Infrastructure;
 using EcoTrack.Models;
 using EcoTrack.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EcoTrack.Controllers
 {
@@ -12,23 +14,29 @@ namespace EcoTrack.Controllers
     public class EmployesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IJournalService _journal;
 
-        public EmployesController(ApplicationDbContext context)
+        public EmployesController(ApplicationDbContext context, IJournalService journal)
         {
             _context = context;
+            _journal = journal;
         }
+
+        private string UtilisateurConnecteId => User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? string.Empty;
 
         // GET /Employes
         public async Task<IActionResult> Index()
         {
             var employes = await _context.Employes
                 .Include(e => e.Departement)
+                .Include(e => e.Service)
                 .Include(e => e.Affectations.Where(a => a.DateRetrait == null))
                 .OrderBy(e => e.Nom)
                 .ToListAsync();
 
             return View(employes);
         }
+
         // GET /Employes/Rechercher
         [HttpGet]
         public IActionResult Rechercher()
@@ -74,6 +82,7 @@ namespace EcoTrack.Controllers
             var viewModel = new EmployeCreerViewModel
             {
                 Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync(),
+                Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync(),
                 ActifsDisponibles = await _context.Actifs.Where(a => a.Etat == EtatActif.Disponible).OrderBy(a => a.Nom).ToListAsync(),
                 Categories = await _context.CategoriesActifs.Where(c => c.EstActif).OrderBy(c => c.Nom).ToListAsync()
             };
@@ -81,6 +90,7 @@ namespace EcoTrack.Controllers
             return View(viewModel);
         }
 
+        // POST /Employes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EmployeCreerViewModel model)
@@ -88,26 +98,21 @@ namespace EcoTrack.Controllers
             var telephoneComplet = $"{model.Indicatif} {model.NumeroTelephone}".Trim();
             var nomNormalise = (model.Nom ?? string.Empty).Trim().ToLower();
             var prenomNormalise = (model.Prenom ?? string.Empty).Trim().ToLower();
-            var emailNormalise = model.Email?.Trim().ToLower();
+            var emailNormalise = (model.Email ?? string.Empty).Trim().ToLower();
 
-            // On récupère d'abord les candidats par Nom+Prénom (requête SQL simple),
-            // puis on compare l'email en mémoire côté C# pour éviter une expression
-            // trop complexe que EF Core traduirait mal.
             var emailsExistants = await _context.Employes
                 .Where(e => e.Nom.ToLower() == nomNormalise && e.Prenom.ToLower() == prenomNormalise)
                 .Select(e => e.Email)
                 .ToListAsync();
 
-            var existeDeja = emailsExistants.Any(email =>
-                (email == null && emailNormalise == null) ||
-                (email != null && emailNormalise != null && email.ToLower() == emailNormalise));
+            var existeDeja = emailsExistants.Any(email => email.ToLower() == emailNormalise);
 
             if (existeDeja)
             {
                 ModelState.AddModelError(string.Empty, "Un employé avec ce nom, ce prénom et cet email existe déjà.");
             }
 
-            if (emailNormalise is not null && await _context.Employes.AnyAsync(e => e.Email != null && e.Email.ToLower() == emailNormalise))
+            if (await _context.Employes.AnyAsync(e => e.Email.ToLower() == emailNormalise))
             {
                 ModelState.AddModelError(nameof(model.Email), "Cet email est déjà utilisé par un autre employé.");
             }
@@ -117,9 +122,42 @@ namespace EcoTrack.Controllers
                 ModelState.AddModelError(nameof(model.NumeroTelephone), "Ce numéro de téléphone est déjà utilisé par un autre employé.");
             }
 
+            if (!await _context.Services.AnyAsync(s => s.Id == model.ServiceId && s.DepartementId == model.DepartementId))
+            {
+                ModelState.AddModelError(nameof(model.ServiceId), "Le service sélectionné n'appartient pas à cette agence.");
+            }
+
+            if (model.ModeAttribution == ModeAttributionActif.ActifExistant)
+            {
+                if (model.ActifExistantId is null)
+                {
+                    ModelState.AddModelError(nameof(model.ActifExistantId), "Veuillez sélectionner un actif à attribuer.");
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(model.NouvelActifNom))
+                {
+                    ModelState.AddModelError(nameof(model.NouvelActifNom), "Le nom du nouvel actif est obligatoire.");
+                }
+                if (string.IsNullOrWhiteSpace(model.NouvelActifNumeroSerie))
+                {
+                    ModelState.AddModelError(nameof(model.NouvelActifNumeroSerie), "Le numéro de série est obligatoire.");
+                }
+                else if (await _context.Actifs.AnyAsync(a => a.NumeroSerie.ToLower() == model.NouvelActifNumeroSerie.ToLower()))
+                {
+                    ModelState.AddModelError(nameof(model.NouvelActifNumeroSerie), "Ce numéro de série existe déjà.");
+                }
+                if (model.NouvelActifCategorieId is null)
+                {
+                    ModelState.AddModelError(nameof(model.NouvelActifCategorieId), "La catégorie du nouvel actif est obligatoire.");
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 model.Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+                model.Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync();
                 model.ActifsDisponibles = await _context.Actifs.Where(a => a.Etat == EtatActif.Disponible).OrderBy(a => a.Nom).ToListAsync();
                 model.Categories = await _context.CategoriesActifs.Where(c => c.EstActif).OrderBy(c => c.Nom).ToListAsync();
                 model.Indicatifs = EcoTrack.Enums.Indicatifs.Liste;
@@ -134,13 +172,16 @@ namespace EcoTrack.Controllers
                 Telephone = telephoneComplet,
                 Poste = model.Poste,
                 DepartementId = model.DepartementId,
+                ServiceId = model.ServiceId,
                 EstActif = true
             };
             _context.Employes.Add(employe);
             await _context.SaveChangesAsync();
 
             Actif actif;
-            if (model.ModeAttribution == ModeAttributionActif.ActifExistant)
+            bool estNouvelActif = model.ModeAttribution == ModeAttributionActif.NouvelActif;
+
+            if (!estNouvelActif)
             {
                 actif = (await _context.Actifs.FindAsync(model.ActifExistantId!.Value))!;
             }
@@ -171,6 +212,9 @@ namespace EcoTrack.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "CreationEmploye",
+                $"A créé l'employé \"{employe.Prenom} {employe.Nom}\" et lui a attribué l'actif \"{actif.Nom}\"" + (estNouvelActif ? " (nouvel actif enregistré)" : ""));
+
             TempData["Succes"] = $"L'employé \"{employe.Prenom} {employe.Nom}\" a été créé et l'actif \"{actif.Nom}\" lui a été attribué.";
             return RedirectToAction(nameof(Index));
         }
@@ -197,7 +241,9 @@ namespace EcoTrack.Controllers
                 NumeroTelephone = numero,
                 Poste = employe.Poste,
                 DepartementId = employe.DepartementId,
-                Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync()
+                ServiceId = employe.ServiceId,
+                Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync(),
+                Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync()
             };
 
             return View(viewModel);
@@ -226,9 +272,9 @@ namespace EcoTrack.Controllers
             }
 
             var telephoneComplet = $"{model.Indicatif} {model.NumeroTelephone}".Trim();
-            var emailNormalise = model.Email?.Trim().ToLower();
+            var emailNormalise = (model.Email ?? string.Empty).Trim().ToLower();
 
-            if (emailNormalise is not null && await _context.Employes.AnyAsync(e => e.Id != model.Id && e.Email != null && e.Email.ToLower() == emailNormalise))
+            if (await _context.Employes.AnyAsync(e => e.Id != model.Id && e.Email.ToLower() == emailNormalise))
             {
                 ModelState.AddModelError(nameof(model.Email), "Cet email est déjà utilisé par un autre employé.");
             }
@@ -238,9 +284,15 @@ namespace EcoTrack.Controllers
                 ModelState.AddModelError(nameof(model.NumeroTelephone), "Ce numéro de téléphone est déjà utilisé par un autre employé.");
             }
 
+            if (!await _context.Services.AnyAsync(s => s.Id == model.ServiceId && s.DepartementId == model.DepartementId))
+            {
+                ModelState.AddModelError(nameof(model.ServiceId), "Le service sélectionné n'appartient pas à cette agence.");
+            }
+
             if (!ModelState.IsValid)
             {
                 model.Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+                model.Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync();
                 model.Indicatifs = EcoTrack.Enums.Indicatifs.Liste;
                 return View(model);
             }
@@ -257,8 +309,12 @@ namespace EcoTrack.Controllers
             employe.Telephone = telephoneComplet;
             employe.Poste = model.Poste;
             employe.DepartementId = model.DepartementId;
+            employe.ServiceId = model.ServiceId;
 
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "ModificationEmploye",
+                $"A modifié les informations de \"{employe.Prenom} {employe.Nom}\"");
 
             TempData["Succes"] = $"Les informations de \"{employe.Prenom} {employe.Nom}\" ont été mises à jour. Ses actifs attribués n'ont pas été modifiés.";
             return RedirectToAction(nameof(Index));
@@ -266,6 +322,7 @@ namespace EcoTrack.Controllers
 
         // POST /Employes/BasculerActivation/5
         [HttpPost]
+        [Authorize(Roles = "AdminPrincipal")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {
@@ -277,6 +334,9 @@ namespace EcoTrack.Controllers
 
             employe.EstActif = !employe.EstActif;
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, employe.EstActif ? "ReactivationEmploye" : "DesactivationEmploye",
+                $"A {(employe.EstActif ? "réactivé" : "désactivé")} l'employé \"{employe.Prenom} {employe.Nom}\"");
 
             TempData["Succes"] = employe.EstActif
                 ? $"\"{employe.Prenom} {employe.Nom}\" a été réactivé."
@@ -290,6 +350,7 @@ namespace EcoTrack.Controllers
         {
             var employe = await _context.Employes
                 .Include(e => e.Departement)
+                .Include(e => e.Service)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employe is null)
@@ -310,12 +371,38 @@ namespace EcoTrack.Controllers
                 .OrderByDescending(a => a.DateRetrait)
                 .ToListAsync();
 
+            var actifIdsConcernes = affectationsActives.Select(a => a.ActifId)
+                .Concat(historiqueComplet.Select(a => a.ActifId))
+                .Distinct()
+                .ToList();
+
+            var toutesLesAffectations = await _context.Affectations
+                .Include(a => a.Employe)
+                .Where(a => actifIdsConcernes.Contains(a.ActifId))
+                .OrderBy(a => a.ActifId).ThenBy(a => a.DateAffectation)
+                .ToListAsync();
+
+            List<HistoriqueLigneViewModel> ConstruireLignes(List<Affectation> affectations) => affectations.Select(aff =>
+            {
+                var chronologieActif = toutesLesAffectations.Where(x => x.ActifId == aff.ActifId).ToList();
+                var index = chronologieActif.FindIndex(x => x.Id == aff.Id);
+                var precedente = index > 0 ? chronologieActif[index - 1] : null;
+
+                return new HistoriqueLigneViewModel
+                {
+                    Affectation = aff,
+                    EstReattribution = precedente is not null,
+                    DetenteurPrecedentNom = precedente is not null ? $"{precedente.Employe?.Prenom} {precedente.Employe?.Nom}" : null,
+                    MemeEmployeQuAvant = precedente is not null && precedente.EmployeId == aff.EmployeId
+                };
+            }).ToList();
+
             var viewModel = new EmployeDetailsViewModel
             {
                 Employe = employe,
-                AffectationsActives = affectationsActives,
+                AffectationsActives = ConstruireLignes(affectationsActives),
                 ActifsDisponibles = await _context.Actifs.Where(a => a.Etat == EtatActif.Disponible).OrderBy(a => a.Nom).ToListAsync(),
-                HistoriqueComplet = historiqueComplet
+                HistoriqueComplet = ConstruireLignes(historiqueComplet)
             };
 
             return View(viewModel);
@@ -328,6 +415,7 @@ namespace EcoTrack.Controllers
         {
             var affectation = await _context.Affectations
                 .Include(a => a.Actif)
+                .Include(a => a.Employe)
                 .FirstOrDefaultAsync(a => a.Id == affectationId);
 
             if (affectation is null)
@@ -342,6 +430,9 @@ namespace EcoTrack.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "RetraitActif",
+                $"A retiré l'actif \"{affectation.Actif?.Nom}\" de \"{affectation.Employe?.Prenom} {affectation.Employe?.Nom}\"");
 
             TempData["Succes"] = $"L'actif \"{affectation.Actif?.Nom}\" a été retiré et repasse disponible.";
             return RedirectToAction(nameof(Details), new { id = employeId });
@@ -358,6 +449,12 @@ namespace EcoTrack.Controllers
             if (actif is null || employe is null)
             {
                 return NotFound();
+            }
+
+            if (!employe.EstActif)
+            {
+                TempData["Erreur"] = "Impossible d'attribuer un actif à un employé désactivé. Réactivez-le d'abord.";
+                return RedirectToAction(nameof(Details), new { id = employeId });
             }
 
             if (actif.Etat != EtatActif.Disponible)
@@ -384,6 +481,9 @@ namespace EcoTrack.Controllers
                 TempData["Erreur"] = "Cet actif vient d'être attribué par une autre action. Veuillez rafraîchir la page.";
                 return RedirectToAction(nameof(Details), new { id = employeId });
             }
+
+            await _journal.EnregistrerAsync(UtilisateurConnecteId, "AttributionActif",
+                $"A attribué l'actif \"{actif.Nom}\" à \"{employe.Prenom} {employe.Nom}\"");
 
             TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été attribué à {employe.Prenom} {employe.Nom}.";
             return RedirectToAction(nameof(Details), new { id = employeId });

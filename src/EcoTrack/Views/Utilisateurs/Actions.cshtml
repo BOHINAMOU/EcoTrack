@@ -1,0 +1,54 @@
+﻿@model List<EcoTrack.Models.JournalAction>
+@{
+    ViewData["Title"] = "Actions des utilisateurs";
+    var utilisateurs = ViewBag.Utilisateurs as List<EcoTrack.Models.ApplicationUser>;
+    string? filtreActuel = ViewBag.UtilisateurIdFiltre;
+}
+
+<h3 class="mb-1">Actions des utilisateurs</h3>
+<p class="text-muted mb-4">Historique des actions importantes (création, modification, attribution, retrait...).</p>
+
+<div class="mb-3" style="max-width: 350px;">
+    <form method="get">
+        <select name="utilisateurId" class="form-select" onchange="this.form.submit()">
+            <option value="">Tous les utilisateurs</option>
+            @if (utilisateurs is not null)
+            {
+                foreach (var u in utilisateurs)
+                {
+                    <option value="@u.Id" selected="@(filtreActuel == u.Id)">@u.Prenom @u.Nom</option>
+                }
+            }
+        </select>
+    </form>
+</div>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Utilisateur</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var action in Model)
+            {
+                <tr>
+                    <td class="text-nowrap">@action.DateAction.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@action.Utilisateur?.Prenom @action.Utilisateur?.Nom</td>
+                    <td><span class="badge bg-light text-dark border">@action.TypeAction</span></td>
+                    <td>@action.Description</td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">Aucune action enregistrée.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
