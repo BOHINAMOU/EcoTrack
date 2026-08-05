@@ -22,7 +22,7 @@ namespace EcoTrack.Controllers
             _journal = journal;
         }
 
-        private string UtilisateurConnecteId => User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) ?? string.Empty;
+        private string UtilisateurConnecteId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
 
         // GET /Employes
         public async Task<IActionResult> Index()
@@ -411,7 +411,7 @@ namespace EcoTrack.Controllers
         // POST /Employes/RetirerActif
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RetirerActif(int affectationId, int employeId)
+        public async Task<IActionResult> RetirerActif(int affectationId, int employeId, string? motif)
         {
             var affectation = await _context.Affectations
                 .Include(a => a.Actif)
@@ -424,6 +424,8 @@ namespace EcoTrack.Controllers
             }
 
             affectation.DateRetrait = DateTime.UtcNow;
+            affectation.Motif = string.IsNullOrWhiteSpace(motif) ? "Retiré sans motif précisé" : motif.Trim();
+
             if (affectation.Actif is not null)
             {
                 affectation.Actif.Etat = EtatActif.Disponible;
@@ -432,7 +434,7 @@ namespace EcoTrack.Controllers
             await _context.SaveChangesAsync();
 
             await _journal.EnregistrerAsync(UtilisateurConnecteId, "RetraitActif",
-                $"A retiré l'actif \"{affectation.Actif?.Nom}\" de \"{affectation.Employe?.Prenom} {affectation.Employe?.Nom}\"");
+                $"A retiré l'actif \"{affectation.Actif?.Nom}\" de \"{affectation.Employe?.Prenom} {affectation.Employe?.Nom}\" (motif : {affectation.Motif})");
 
             TempData["Succes"] = $"L'actif \"{affectation.Actif?.Nom}\" a été retiré et repasse disponible.";
             return RedirectToAction(nameof(Details), new { id = employeId });
@@ -441,7 +443,7 @@ namespace EcoTrack.Controllers
         // POST /Employes/AttribuerActif
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AttribuerActif(int employeId, int actifId)
+        public async Task<IActionResult> AttribuerActif(int employeId, int actifId, string? motif)
         {
             var actif = await _context.Actifs.FindAsync(actifId);
             var employe = await _context.Employes.FindAsync(employeId);
@@ -463,13 +465,15 @@ namespace EcoTrack.Controllers
                 return RedirectToAction(nameof(Details), new { id = employeId });
             }
 
+            var motifFinal = string.IsNullOrWhiteSpace(motif) ? "Attribution manuelle" : motif.Trim();
+
             actif.Etat = EtatActif.Attribue;
             _context.Affectations.Add(new Affectation
             {
                 ActifId = actif.Id,
                 EmployeId = employe.Id,
                 DateAffectation = DateTime.UtcNow,
-                Motif = "Attribution manuelle"
+                Motif = motifFinal
             });
 
             try
@@ -483,7 +487,7 @@ namespace EcoTrack.Controllers
             }
 
             await _journal.EnregistrerAsync(UtilisateurConnecteId, "AttributionActif",
-                $"A attribué l'actif \"{actif.Nom}\" à \"{employe.Prenom} {employe.Nom}\"");
+                $"A attribué l'actif \"{actif.Nom}\" à \"{employe.Prenom} {employe.Nom}\" (motif : {motifFinal})");
 
             TempData["Succes"] = $"L'actif \"{actif.Nom}\" a été attribué à {employe.Prenom} {employe.Nom}.";
             return RedirectToAction(nameof(Details), new { id = employeId });

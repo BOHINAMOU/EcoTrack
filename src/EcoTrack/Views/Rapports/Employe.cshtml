@@ -1,6 +1,5 @@
 ﻿@{
     ViewData["Title"] = "Rapport par employé";
-    var employes = ViewBag.Employes as IEnumerable<dynamic>;
 }
 
 <h3>Rapport par employé</h3>
@@ -21,18 +20,15 @@
             </div>
         </div>
 
-        <div class="mb-3" id="blocEmploye" style="display:none;">
+        <div class="mb-3 position-relative" id="blocEmploye" style="display:none;">
             <label class="form-label">Employé</label>
-            <select name="employeId" id="selectEmploye" class="form-select">
-                <option value="">-- Choisir --</option>
-                @if (employes is not null)
-                {
-                    foreach (var e in employes)
-                    {
-                        <option value="@e.Id">@e.NomComplet</option>
-                    }
-                }
-            </select>
+            <input type="text" id="rechercheEmploye" class="form-control" placeholder="Tapez un nom..." autocomplete="off" />
+            <input type="hidden" name="employeId" id="employeIdCache" />
+            <div id="resultatsEmploye" class="search-results-dropdown" style="display:none;"></div>
+            <div id="employeChoisi" class="mt-2" style="display:none;">
+                <span class="badge bg-primary" id="badgeEmploye"></span>
+                <button type="button" class="btn btn-sm btn-link text-danger" id="btnRetirerEmploye">Changer</button>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">
@@ -47,17 +43,78 @@
     var modeTous = document.getElementById('modeTous');
     var modeUn = document.getElementById('modeUn');
     var blocEmploye = document.getElementById('blocEmploye');
-    var selectEmploye = document.getElementById('selectEmploye');
+    var champRecherche = document.getElementById('rechercheEmploye');
+    var zoneResultats = document.getElementById('resultatsEmploye');
+    var champIdCache = document.getElementById('employeIdCache');
+    var zoneChoisi = document.getElementById('employeChoisi');
+    var badgeEmploye = document.getElementById('badgeEmploye');
+    var btnRetirer = document.getElementById('btnRetirerEmploye');
+    var minuteur;
 
     function basculer() {
         var estUn = modeUn.checked;
         blocEmploye.style.display = estUn ? '' : 'none';
-        selectEmploye.disabled = !estUn;
-        if (!estUn) { selectEmploye.value = ''; }
+        if (!estUn) { champIdCache.value = ''; }
     }
 
     modeTous.addEventListener('change', basculer);
     modeUn.addEventListener('change', basculer);
     basculer();
+
+    champRecherche.addEventListener('input', function () {
+        clearTimeout(minuteur);
+        var terme = champRecherche.value.trim();
+
+        if (terme.length < 2) {
+            zoneResultats.style.display = 'none';
+            return;
+        }
+
+        minuteur = setTimeout(function () {
+            fetch('/Employes/RechercherJson?terme=' + encodeURIComponent(terme))
+                .then(function (reponse) { return reponse.json(); })
+                .then(function (resultats) { afficherResultats(resultats); })
+                .catch(function (erreur) { console.error('Erreur de recherche :', erreur); });
+        }, 300);
+    });
+
+    function afficherResultats(resultats) {
+        if (resultats.length === 0) {
+            zoneResultats.innerHTML = '<div class="p-2 text-muted">Aucun résultat.</div>';
+            zoneResultats.style.display = 'block';
+            return;
+        }
+
+        var html = '';
+        resultats.forEach(function (e) {
+            html += '<a href="#" class="search-item" data-id="' + e.id + '" data-nom="' + e.nomComplet + '">' + e.nomComplet + '</a>';
+        });
+        zoneResultats.innerHTML = html;
+        zoneResultats.style.display = 'block';
+
+        zoneResultats.querySelectorAll('.search-item').forEach(function (lien) {
+            lien.addEventListener('click', function (evenement) {
+                evenement.preventDefault();
+                champIdCache.value = lien.dataset.id;
+                badgeEmploye.textContent = lien.dataset.nom;
+                zoneChoisi.style.display = 'block';
+                champRecherche.value = '';
+                champRecherche.style.display = 'none';
+                zoneResultats.style.display = 'none';
+            });
+        });
+    }
+
+    btnRetirer.addEventListener('click', function () {
+        champIdCache.value = '';
+        zoneChoisi.style.display = 'none';
+        champRecherche.style.display = '';
+    });
+
+    document.addEventListener('click', function (evenement) {
+        if (!champRecherche.contains(evenement.target) && !zoneResultats.contains(evenement.target)) {
+            zoneResultats.style.display = 'none';
+        }
+    });
 </script>
 }

@@ -28,52 +28,60 @@ namespace EcoTrack.Data
                 }
             }
 
-
-            // Création des administrateurs depuis appsettings.json
-            var admins = configuration
-                .GetSection("SeedAdmins")
-                .GetChildren();
-
+            // Lecture des administrateurs dans appsettings.json
+            var admins = configuration.GetSection("SeedAdmins").GetChildren();
 
             foreach (var seedAdmin in admins)
             {
                 var nomUtilisateur = seedAdmin["NomUtilisateur"];
                 var email = seedAdmin["Email"];
+                var nom = seedAdmin["Nom"];
+                var prenom = seedAdmin["Prenom"];
+                var motDePasse = seedAdmin["MotDePasse"];
 
-
-                if (await userManager.FindByNameAsync(nomUtilisateur) == null)
+                // Vérification des valeurs obligatoires
+                if (string.IsNullOrWhiteSpace(nomUtilisateur) ||
+                    string.IsNullOrWhiteSpace(email) ||
+                    string.IsNullOrWhiteSpace(motDePasse))
                 {
-                    var admin = new ApplicationUser
+                    continue;
+                }
+
+                // Vérifie si l'utilisateur existe déjà par nom d'utilisateur
+                var utilisateur = await userManager.FindByNameAsync(nomUtilisateur);
+
+                // Sinon vérifie par email
+                utilisateur ??= await userManager.FindByEmailAsync(email);
+
+                if (utilisateur == null)
+                {
+                    utilisateur = new ApplicationUser
                     {
                         UserName = nomUtilisateur,
                         Email = email,
-
-                        Nom = seedAdmin["Nom"],
-                        Prenom = seedAdmin["Prenom"],
-
+                        Nom = nom ?? string.Empty,
+                        Prenom = prenom ?? string.Empty,
                         EmailConfirmed = true,
-
-                        // Le mot de passe est directement utilisable
                         DoitChangerMotDePasse = false
                     };
 
+                    var resultat = await userManager.CreateAsync(utilisateur, motDePasse);
 
-                    var motDePasse = seedAdmin["MotDePasse"];
-
-
-                    var resultat = await userManager.CreateAsync(
-                        admin,
-                        motDePasse
-                    );
-
-
-                    if (resultat.Succeeded)
+                    if (!resultat.Succeeded)
                     {
-                        await userManager.AddToRoleAsync(
-                            admin,
-                            RoleAdminPrincipal
-                        );
+                        foreach (var erreur in resultat.Errors)
+                        {
+                            Console.WriteLine($"Erreur création utilisateur : {erreur.Description}");
+                        }
+
+                        continue;
                     }
+                }
+
+                // Attribue le rôle AdminPrincipal s'il ne l'a pas déjà
+                if (!await userManager.IsInRoleAsync(utilisateur, RoleAdminPrincipal))
+                {
+                    await userManager.AddToRoleAsync(utilisateur, RoleAdminPrincipal);
                 }
             }
         }
