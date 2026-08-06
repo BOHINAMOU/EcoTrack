@@ -3,10 +3,85 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EcoTrack</title>
+    <title>@ViewData["Title"] - EcoTrack | Ecobank Togo</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+            body {
+                font-family: 'Plus Jakarta Sans', sans-serif;
+            }
+
+            /* 1. Configuration Flexbox de la Sidebar pour occuper 100% de la hauteur */
+            .ecotrack-sidebar {
+                display: flex !important;
+                flex-direction: column !important;
+                height: 100vh;
+            }
+
+            .sidebar-nav {
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1; /* Remplit tout l'espace vertical */
+                padding-bottom: 15px;
+            }
+
+                /* Espacement léger entre chaque élément du menu principal */
+                .sidebar-nav .nav-link,
+                .sidebar-nav .nav-group-toggle {
+                    margin-bottom: 4px;
+                }
+
+            /* 2. Pousse le bloc Paramètres TOUT EN BAS de la sidebar */
+            .group-parametres-container {
+                margin-top: auto; /* Pousse automatiquement l'élément au bas du conteneur */
+                border-top: 1px solid rgba(255, 255, 255, 0.15); /* Ligne de séparation discrète */
+                padding-top: 12px;
+            }
+
+            /* Styles spécifiques pour le sous-menu Paramètres */
+            .submenu-parametres {
+                background-color: rgba(0, 0, 0, 0.25);
+                border-radius: 8px;
+                margin: 4px 8px 0 8px;
+                padding: 6px 0;
+            }
+
+                .submenu-parametres a,
+                .submenu-parametres .btn-deconnexion-link {
+                    display: flex;
+                    align-items: center;
+                    padding: 8px 16px;
+                    font-size: 0.875rem;
+                    text-decoration: none;
+                    transition: all 0.2s ease;
+                }
+
+            .lien-profil {
+                color: #e2e8f0 !important;
+            }
+
+                .lien-profil:hover {
+                    color: #ffffff !important;
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+
+            .btn-deconnexion-link {
+                color: #fca5a5 !important;
+                background: transparent;
+                border: none;
+                width: 100%;
+                text-align: left;
+            }
+
+                .btn-deconnexion-link:hover {
+                    color: #ef4444 !important;
+                    background-color: rgba(239, 68, 68, 0.15);
+                }
+    </style>
 </head>
 <body>
     @if (User.Identity is not null && User.Identity.IsAuthenticated)
@@ -14,20 +89,29 @@
         <div class="ecotrack-layout">
             <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="bi bi-list fs-5"></i>
+            </button>
+
             <aside class="ecotrack-sidebar" id="ecotrackSidebar">
                 <div class="sidebar-header">
-                    <img src="~/images/logo-ecotrack.png" alt="EcoTrack" class="sidebar-logo" onerror="this.style.display='none'" />
-                    <h5>Bienvenue sur<br /><strong>ECOTRACK</strong></h5>
+                    <img src="~/images/logo_ecobank.png" alt="Ecobank Logo" class="sidebar-logo-img" onerror="this.style.display='none'" />
+                    <div>
+                        <h6 class="m-0 fw-bold text-white">EcoTrack</h6>
+                        <small class="text-white-50" style="font-size:0.7rem;">Ecobank-Togo</small>
+                    </div>
                 </div>
 
                 <nav class="sidebar-nav">
+                    <!-- TABLEAU DE BORD -->
                     <a asp-controller="Home" asp-action="Index" class="nav-link lien-accueil">
-                        <i class="bi bi-speedometer2"></i> Mon tableau de bord
+                        <span><i class="bi bi-speedometer2 me-2"></i> Tableau de bord</span>
                     </a>
 
-                    <div class="nav-link nav-group-toggle" data-cible="sousMenuEmployes">
-                        <span><i class="bi bi-people"></i> Gestion employés</span>
-                        <i class="bi bi-chevron-down"></i>
+                    <!-- EMPLOYES -->
+                    <div class="nav-group-toggle" data-cible="sousMenuEmployes">
+                        <span><i class="bi bi-people me-2"></i> Employés</span>
+                        <i class="bi bi-chevron-down small"></i>
                     </div>
                     <div class="nav-submenu" id="sousMenuEmployes">
                         <a asp-controller="Employes" asp-action="Index">Liste des employés</a>
@@ -35,37 +119,52 @@
                         <a asp-controller="Employes" asp-action="Rechercher">Rechercher un employé</a>
                     </div>
 
-                    <div class="nav-link nav-group-toggle" data-cible="sousMenuActifs">
-                        <span><i class="bi bi-laptop"></i> Gestion actifs</span>
-                        <i class="bi bi-chevron-down"></i>
+                    <!-- ACTIFS -->
+                    <div class="nav-group-toggle" data-cible="sousMenuActifs">
+                        <span><i class="bi bi-laptop me-2"></i> Actifs</span>
+                        <i class="bi bi-chevron-down small"></i>
                     </div>
                     <div class="nav-submenu" id="sousMenuActifs">
                         <a asp-controller="Actifs" asp-action="Index">Tous les actifs</a>
                         <a asp-controller="Actifs" asp-action="Create">Nouvel actif</a>
-                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Disponible">Actifs disponibles</a>
-                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Attribue">Actifs attribués</a>
+                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Disponible">Disponibles</a>
+                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Attribue">Attribués</a>
+                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Deteriore">Détériorés</a>
                     </div>
 
+                    <!-- AGENCES -->
                     <a asp-controller="Departements" asp-action="Index" class="nav-link">
-                        <i class="bi bi-building"></i> Agences
+                        <span><i class="bi bi-building me-2"></i> Agences</span>
                     </a>
-                     <div class="nav-link nav-group-toggle" data-cible="sousMenuOrganisation">
-                        <span><i class="bi bi-diagram-3"></i> Catégories & Services</span>
-                        <i class="bi bi-chevron-down"></i>
+
+                    <!-- REFERENTIELS -->
+                    <div class="nav-group-toggle" data-cible="sousMenuOrganisation">
+                        <span><i class="bi bi-diagram-3 me-2"></i> Gestion des référentiels</span>
+                        <i class="bi bi-chevron-down small"></i>
                     </div>
                     <div class="nav-submenu" id="sousMenuOrganisation">
                         <a asp-controller="CategoriesActifs" asp-action="Index">Catégories d'actifs</a>
                         <a asp-controller="Services" asp-action="Index">Services</a>
                     </div>
-                    <a asp-controller="Rapports" asp-action="Index" class="nav-link">
-                        <i class="bi bi-file-earmark-pdf"></i> Rapports
-                    </a>
 
+                    <!-- RAPPORTS / ANALYSES ET STATISTIQUES -->
+                    <div class="nav-group-toggle" data-cible="sousMenuRapports">
+                        <span><i class="bi bi-file-earmark-pdf me-2"></i> Analyses/Statistiques</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </div>
+                    <div class="nav-submenu" id="sousMenuRapports">
+                        <a asp-controller="Rapports" asp-action="Employe">Rapport par employé</a>
+                        <a asp-controller="Rapports" asp-action="Departement">Rapport par agence ou service</a>
+                        <a asp-controller="Rapports" asp-action="PlageDates">Rapport par plage de dates</a>
+                        <a asp-controller="Rapports" asp-action="Inventaire">Rapports sur les actifs</a>
+                    </div>
+
+                    <!-- UTILISATEURS -->
                     @if (User.IsInRole("AdminPrincipal"))
                     {
-                        <div class="nav-link nav-group-toggle" data-cible="sousMenuUtilisateurs">
-                            <span><i class="bi bi-person-gear"></i> Gestion des utilisateurs</span>
-                            <i class="bi bi-chevron-down"></i>
+                        <div class="nav-group-toggle" data-cible="sousMenuUtilisateurs">
+                            <span><i class="bi bi-person-gear me-2"></i> Administration des comptes</span>
+                            <i class="bi bi-chevron-down small"></i>
                         </div>
                         <div class="nav-submenu" id="sousMenuUtilisateurs">
                             <a asp-controller="Utilisateurs" asp-action="Index">Voir tous les utilisateurs</a>
@@ -73,26 +172,32 @@
                             <a asp-controller="Utilisateurs" asp-action="Actions">Actions des utilisateurs</a>
                         </div>
                     }
-                </nav>
 
-                <div class="sidebar-footer">
-                    <a asp-controller="Compte" asp-action="Profil" class="btn btn-outline-light btn-sm w-100 mb-2">
-                        <i class="bi bi-person-circle"></i> Mon profil
-                    </a>
-                    <form asp-controller="Compte" asp-action="Deconnexion" method="post">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-outline-light btn-sm w-100">
-                            <i class="bi bi-box-arrow-right"></i> Déconnexion
-                        </button>
-                    </form>
-                </div>
+                    <!-- ⚙️ PARAMÈTRES (POUSSÉ AUTOMATIQUEMENT TOUT EN BAS) -->
+                    <div class="group-parametres-container">
+                        <div class="nav-group-toggle" data-cible="sousMenuParametres">
+                            <span><i class="bi bi-gear me-2"></i> Paramètres</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </div>
+                        <div class="nav-submenu submenu-parametres" id="sousMenuParametres">
+                            <!-- Profil -->
+                            <a asp-controller="Compte" asp-action="Profil" class="lien-profil">
+                                <i class="bi bi-person-circle me-2"></i> Profil
+                            </a>
+
+                            <!-- Déconnexion -->
+                            <form asp-controller="Compte" asp-action="Deconnexion" method="post" class="m-0 p-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-deconnexion-link">
+                                    <i class="bi bi-box-arrow-right me-2"></i> Déconnexion
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </nav>
             </aside>
 
             <main class="ecotrack-content">
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="bi bi-list"></i>
-                </button>
-
                 @if (TempData["Succes"] is not null)
                 {
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -121,33 +226,28 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const sidebar = document.getElementById('ecotrackSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const toggle = document.getElementById('sidebarToggle');
+        var sidebar = document.getElementById('ecotrackSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        var toggle = document.getElementById('sidebarToggle');
 
-        function fermerSidebar() {
-            sidebar?.classList.remove('ouverte');
-            overlay?.classList.remove('ouverte');
-        }
-
-        toggle?.addEventListener('click', () => {
-            sidebar?.classList.toggle('ouverte');
-            overlay?.classList.toggle('ouverte');
+        toggle?.addEventListener('click', function () {
+        sidebar?.classList.toggle('ouverte');
+        overlay?.classList.toggle('ouverte');
         });
 
-        overlay?.addEventListener('click', fermerSidebar);
+        overlay?.addEventListener('click', function () {
+        sidebar?.classList.remove('ouverte');
+        overlay?.classList.remove('ouverte');
+        });
+
+        document.querySelectorAll('.nav-group-toggle').forEach(function (bouton) {
+        bouton.addEventListener('click', function () {
+        var cible = document.getElementById(bouton.dataset.cible);
+        cible?.classList.toggle('ouvert');
+        });
+        });
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
-
-    <script>
-        document.querySelectorAll('.nav-group-toggle').forEach(bouton => {
-            bouton.addEventListener('click', () => {
-                const cible = document.getElementById(bouton.dataset.cible);
-                bouton.classList.toggle('ouvert');
-                cible?.classList.toggle('ouvert');
-            });
-        });
-    </script>
 </body>
 </html>

@@ -100,12 +100,18 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Departement departement)
         {
-            var existeDeja = await _context.Departements
-                .AnyAsync(d => d.Nom.ToLower() == departement.Nom.ToLower());
-
-            if (existeDeja)
+            // Vérification de sécurité : s'assurer que le Nom n'est ni null ni vide
+            if (!string.IsNullOrWhiteSpace(departement.Nom))
             {
-                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
+                var nomSaisi = departement.Nom.Trim();
+
+                var existeDeja = await _context.Departements
+                    .AnyAsync(d => d.Nom != null && d.Nom.ToLower() == nomSaisi.ToLower());
+
+                if (existeDeja)
+                {
+                    ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
+                }
             }
 
             if (!ModelState.IsValid)
@@ -145,12 +151,18 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            var existeDeja = await _context.Departements
-                .AnyAsync(d => d.Id != departement.Id && d.Nom.ToLower() == departement.Nom.ToLower());
-
-            if (existeDeja)
+            // Sécurité contre les valeurs nuls dans Edit
+            if (!string.IsNullOrWhiteSpace(departement.Nom))
             {
-                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
+                var nomSaisi = departement.Nom.Trim();
+
+                var existeDeja = await _context.Departements
+                    .AnyAsync(d => d.Id != departement.Id && d.Nom != null && d.Nom.ToLower() == nomSaisi.ToLower());
+
+                if (existeDeja)
+                {
+                    ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
+                }
             }
 
             if (!ModelState.IsValid)

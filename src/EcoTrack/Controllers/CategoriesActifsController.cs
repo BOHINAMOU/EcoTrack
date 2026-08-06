@@ -56,12 +56,19 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategorieActif categorie)
         {
-            var existeDeja = await _context.CategoriesActifs
-                .AnyAsync(c => c.Nom.ToLower() == categorie.Nom.ToLower());
-
-            if (existeDeja)
+            // Vérification si le Nom a été renseigné
+            if (!string.IsNullOrWhiteSpace(categorie.Nom))
             {
-                ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+                var nomSaisi = categorie.Nom.Trim();
+
+                // Requête sécurisée contre les valeurs nulles
+                var existeDeja = await _context.CategoriesActifs
+                    .AnyAsync(c => c.Nom != null && c.Nom.ToLower() == nomSaisi.ToLower());
+
+                if (existeDeja)
+                {
+                    ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+                }
             }
 
             if (!ModelState.IsValid)
@@ -101,12 +108,18 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            var existeDeja = await _context.CategoriesActifs
-                .AnyAsync(c => c.Id != categorie.Id && c.Nom.ToLower() == categorie.Nom.ToLower());
-
-            if (existeDeja)
+            if (!string.IsNullOrWhiteSpace(categorie.Nom))
             {
-                ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+                var nomSaisi = categorie.Nom.Trim();
+
+                // Requête sécurisée également dans Edit
+                var existeDeja = await _context.CategoriesActifs
+                    .AnyAsync(c => c.Id != categorie.Id && c.Nom != null && c.Nom.ToLower() == nomSaisi.ToLower());
+
+                if (existeDeja)
+                {
+                    ModelState.AddModelError(nameof(CategorieActif.Nom), "Une catégorie avec ce nom existe déjà.");
+                }
             }
 
             if (!ModelState.IsValid)
