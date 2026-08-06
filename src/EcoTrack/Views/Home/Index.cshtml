@@ -167,6 +167,16 @@
                             <small class="text-muted">Voir toutes les agences sites </small>
                         </div>
                     </a>
+
+                    <a asp-controller="Actifs" asp-action="ImportExcel" class="btn p-3 text-start border-0 shadow-sm d-flex align-items-center gap-3" style="background: #f8fafd; border-radius: 10px;">
+                        <div class="p-2 rounded-circle text-white" style="background: #198754;">
+                            <i class="bi bi-file-earmark-excel-fill"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-dark">Charger un fichier Excel</div>
+                            <small class="text-muted">Importer des employés avec leurs actifs en Excel (.xlsx, .xls)</small>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -252,4 +262,4 @@
         }
         });
     </script>
-}
+} 
