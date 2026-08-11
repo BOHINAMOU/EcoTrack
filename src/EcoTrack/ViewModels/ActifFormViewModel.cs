@@ -31,6 +31,16 @@ namespace EcoTrack.ViewModels
         [Display(Name = "Catégorie")]
         public int CategorieActifId { get; set; }
 
+        /// <summary>Format "EM:12" (employé), "AG:3" (agence), "DP:5" (département), "DV:2" (division), "SV:9" (service), "UN:4" (unité), ou vide (aucun/disponible).</summary>
+        [Display(Name = "Attribuer à")]
+        public string? ProprietaireUnite { get; set; }
+
         public List<CategorieActif> Categories { get; set; } = new();
+        public List<Employe> Employes { get; set; } = new();
+        public List<Agence> Agences { get; set; } = new();
+        public List<Departement> Departements { get; set; } = new();
+        public List<Division> Divisions { get; set; } = new();
+        public List<Service> Services { get; set; } = new();
+        public List<Unite> Unites { get; set; } = new();
     }
 }

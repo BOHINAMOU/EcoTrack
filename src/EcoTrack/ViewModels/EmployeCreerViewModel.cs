@@ -18,10 +18,9 @@ namespace EcoTrack.ViewModels
         [Required(ErrorMessage = "Le prénom est obligatoire.")]
         [StringLength(100)]
         public string Prenom { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "L'email est obligatoire.")]
-        [EmailAddress(ErrorMessage = "Le format de l'email n'est pas valide (ex: nom@domaine.com).")]
-        [RegularExpression(@"^[^\s@]+@[^\s@]+\.[^\s@]{2,}$", ErrorMessage = "Le format de l'email n'est pas valide (ex: nom@domaine.com).")]
-        [StringLength(150)]
+        [EmailAddress(ErrorMessage = "Le format de l'email n'est pas valide.")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "L'indicatif est obligatoire.")]
@@ -36,15 +35,21 @@ namespace EcoTrack.ViewModels
         [StringLength(100)]
         public string? Poste { get; set; }
 
-        [Required(ErrorMessage = "L'agence est obligatoire.")]
+        [StringLength(50)]
+        [Display(Name = "Nom d'utilisateur (laisser vide pour générer automatiquement)")]
+        public string? NomUtilisateur { get; set; }
+
+        // --- Chaîne organisationnelle : seul UniteId est réellement enregistré,
+        // les autres ne servent qu'à alimenter les menus en cascade côté vue. ---
+        [Required(ErrorMessage = "L'unité est obligatoire.")]
+        [Display(Name = "Unité")]
+        public int UniteId { get; set; }
+
+        [Required]
         [Display(Name = "Agence")]
-        public int DepartementId { get; set; }
-        [Required(ErrorMessage = "Le service est obligatoire.")]
-        [Display(Name = "Service")]
-        public int ServiceId { get; set; }
+        public int AgenceId { get; set; }
 
-        public List<Service> Services { get; set; } = new();
-
+        // --- Attribution obligatoire d'un actif ---
         [Required]
         [Display(Name = "Mode d'attribution")]
         public ModeAttributionActif ModeAttribution { get; set; } = ModeAttributionActif.ActifExistant;
@@ -69,9 +74,15 @@ namespace EcoTrack.ViewModels
         [Display(Name = "Catégorie")]
         public int? NouvelActifCategorieId { get; set; }
 
+        // --- Listes pour remplir les menus déroulants en cascade ---
+        public List<Agence> Agences { get; set; } = new();
         public List<Departement> Departements { get; set; } = new();
+        public List<Division> Divisions { get; set; } = new();
+        public List<Service> Services { get; set; } = new();
+        public List<Unite> Unites { get; set; } = new();
+
         public List<Actif> ActifsDisponibles { get; set; } = new();
         public List<CategorieActif> Categories { get; set; } = new();
-        public List<(string Code, string Pays)> Indicatifs { get; set; } = EcoTrack.Enums.Indicatifs.Liste;
+        public List<(string Code, string Pays)> IndicatifsListe { get; set; } = EcoTrack.Enums.Indicatifs.Liste;
     }
 }

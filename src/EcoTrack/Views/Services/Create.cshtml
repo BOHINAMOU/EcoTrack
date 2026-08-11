@@ -15,14 +15,13 @@
             <input asp-for="Nom" class="form-control" />
             <span asp-validation-for="Nom" class="text-danger"></span>
         </div>
-
         <div class="mb-3">
-            <label asp-for="DepartementId" class="form-label">Agence</label>
-            <select asp-for="DepartementId" class="form-select"
-                    asp-items="@(new SelectList((IEnumerable<EcoTrack.Models.Departement>)ViewBag.Agences, "Id", "Nom"))">
+            <label asp-for="DivisionId" class="form-label">Division</label>
+            <select asp-for="DivisionId" class="form-select"
+                    asp-items="@(new SelectList((IEnumerable<EcoTrack.Models.Division>)ViewBag.Divisions, "Id", "Nom"))">
                 <option value="">-- Choisir --</option>
             </select>
-            <span asp-validation-for="DepartementId" class="text-danger"></span>
+            <span asp-validation-for="DivisionId" class="text-danger"></span>
         </div>
 
         <button type="submit" class="btn btn-primary">Créer</button>
@@ -31,5 +30,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

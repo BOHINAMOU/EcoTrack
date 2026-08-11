@@ -1,25 +1,65 @@
 ﻿@model EcoTrack.Models.Departement
+
 @{
     ViewData["Title"] = "Supprimer le département";
 }
 
-<h3>Confirmer la suppression</h3>
+<h2 class="mb-4">Supprimer le département</h2>
 
-<div class="card bg-white p-4" style="max-width: 500px;">
-    <p>Voulez-vous vraiment supprimer le département <strong>@Model.Nom</strong> ?</p>
+<div class="alert alert-danger">
+    <strong>Attention !</strong>
+    Vous êtes sur le point de supprimer le département
+    <strong>@Model.Nom</strong>.
+</div>
 
-    @if (Model.Employes.Any())
-    {
-        <div class="alert alert-warning">
-            Ce département contient encore <strong>@Model.Employes.Count</strong> employé(s).
-            La suppression sera refusée tant qu'ils n'auront pas été réaffectés à un autre département.
-        </div>
-    }
+<div class="card shadow-sm">
+    <div class="card-body">
 
-    <form asp-action="Delete" method="post">
-        @Html.AntiForgeryToken()
-        <input type="hidden" asp-for="Id" />
-        <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
-    </form>
+        ```
+        <dl class="row">
+            <dt class="col-sm-3">Nom</dt>
+            <dd class="col-sm-9">@Model.Nom</dd>
+
+            <dt class="col-sm-3">Agence</dt>
+            <dd class="col-sm-9">
+                @Model.Agence?.Nom
+            </dd>
+
+            <dt class="col-sm-3">Nombre de divisions</dt>
+            <dd class="col-sm-9">
+                @Model.Divisions.Count
+            </dd>
+        </dl>
+
+        @if (Model.Divisions.Any())
+        {
+            <div class="alert alert-warning mt-3">
+                Ce département contient encore
+                <strong>@Model.Divisions.Count</strong> division(s).
+                La suppression peut être refusée tant que
+                ces divisions existent.
+            </div>
+        }
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-trash"></i>
+                    Confirmer la suppression
+                </button>
+
+                <a asp-action="Index"
+                   class="btn btn-outline-secondary ms-2">
+                    Annuler
+                </a>
+            </div>
+        </form>
+
+    </div>
+    ```
+
 </div>

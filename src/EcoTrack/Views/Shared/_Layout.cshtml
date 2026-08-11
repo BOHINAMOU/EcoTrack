@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - EcoTrack | Ecobank Togo</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,7 +16,6 @@
                 font-family: 'Plus Jakarta Sans', sans-serif;
             }
 
-            /* 1. Configuration Flexbox de la Sidebar pour occuper 100% de la hauteur */
             .ecotrack-sidebar {
                 display: flex !important;
                 flex-direction: column !important;
@@ -25,24 +25,20 @@
             .sidebar-nav {
                 display: flex;
                 flex-direction: column;
-                flex-grow: 1; /* Remplit tout l'espace vertical */
+                flex-grow: 1;
                 padding-bottom: 15px;
             }
 
-                /* Espacement léger entre chaque élément du menu principal */
-                .sidebar-nav .nav-link,
-                .sidebar-nav .nav-group-toggle {
+                .sidebar-nav .nav-link, .sidebar-nav .nav-group-toggle {
                     margin-bottom: 4px;
                 }
 
-            /* 2. Pousse le bloc Paramètres TOUT EN BAS de la sidebar */
             .group-parametres-container {
-                margin-top: auto; /* Pousse automatiquement l'élément au bas du conteneur */
-                border-top: 1px solid rgba(255, 255, 255, 0.15); /* Ligne de séparation discrète */
+                margin-top: auto;
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
                 padding-top: 12px;
             }
 
-            /* Styles spécifiques pour le sous-menu Paramètres */
             .submenu-parametres {
                 background-color: rgba(0, 0, 0, 0.25);
                 border-radius: 8px;
@@ -50,8 +46,7 @@
                 padding: 6px 0;
             }
 
-                .submenu-parametres a,
-                .submenu-parametres .btn-deconnexion-link {
+                .submenu-parametres a, .submenu-parametres .btn-deconnexion-link {
                     display: flex;
                     align-items: center;
                     padding: 8px 16px;
@@ -81,6 +76,7 @@
                     color: #ef4444 !important;
                     background-color: rgba(239, 68, 68, 0.15);
                 }
+
     </style>
 </head>
 <body>
@@ -103,89 +99,93 @@
                 </div>
 
                 <nav class="sidebar-nav">
-                    <!-- TABLEAU DE BORD -->
-                    <a asp-controller="Home" asp-action="Index" class="nav-link lien-accueil">
-                        <span><i class="bi bi-speedometer2 me-2"></i> Tableau de bord</span>
-                    </a>
-
-                    <!-- EMPLOYES -->
-                    <div class="nav-group-toggle" data-cible="sousMenuEmployes">
-                        <span><i class="bi bi-people me-2"></i> Employés</span>
-                        <i class="bi bi-chevron-down small"></i>
-                    </div>
-                    <div class="nav-submenu" id="sousMenuEmployes">
-                        <a asp-controller="Employes" asp-action="Index">Liste des employés</a>
-                        <a asp-controller="Employes" asp-action="Create">Nouvel employé</a>
-                        <a asp-controller="Employes" asp-action="Rechercher">Rechercher un employé</a>
-                    </div>
-
-                    <!-- ACTIFS -->
-                    <div class="nav-group-toggle" data-cible="sousMenuActifs">
-                        <span><i class="bi bi-laptop me-2"></i> Actifs</span>
-                        <i class="bi bi-chevron-down small"></i>
-                    </div>
-                    <div class="nav-submenu" id="sousMenuActifs">
-                        <a asp-controller="Actifs" asp-action="Index">Tous les actifs</a>
-                        <a asp-controller="Actifs" asp-action="Create">Nouvel actif</a>
-                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Disponible">Disponibles</a>
-                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Attribue">Attribués</a>
-                        <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Deteriore">Détériorés</a>
-                    </div>
-
-                    <!-- AGENCES -->
-                    <a asp-controller="Departements" asp-action="Index" class="nav-link">
-                        <span><i class="bi bi-building me-2"></i> Agences</span>
-                    </a>
-
-                    <!-- REFERENTIELS -->
-                    <div class="nav-group-toggle" data-cible="sousMenuOrganisation">
-                        <span><i class="bi bi-diagram-3 me-2"></i> Gestion des référentiels</span>
-                        <i class="bi bi-chevron-down small"></i>
-                    </div>
-                    <div class="nav-submenu" id="sousMenuOrganisation">
-                        <a asp-controller="CategoriesActifs" asp-action="Index">Catégories d'actifs</a>
-                        <a asp-controller="Services" asp-action="Index">Services</a>
-                    </div>
-
-                    <!-- RAPPORTS / ANALYSES ET STATISTIQUES -->
-                    <div class="nav-group-toggle" data-cible="sousMenuRapports">
-                        <span><i class="bi bi-file-earmark-pdf me-2"></i> Analyses/Statistiques</span>
-                        <i class="bi bi-chevron-down small"></i>
-                    </div>
-                    <div class="nav-submenu" id="sousMenuRapports">
-                        <a asp-controller="Rapports" asp-action="Employe">Rapport par employé</a>
-                        <a asp-controller="Rapports" asp-action="Departement">Rapport par agence ou service</a>
-                        <a asp-controller="Rapports" asp-action="PlageDates">Rapport par plage de dates</a>
-                        <a asp-controller="Rapports" asp-action="Inventaire">Rapports sur les actifs</a>
-                    </div>
-
-                    <!-- UTILISATEURS -->
-                    @if (User.IsInRole("AdminPrincipal"))
+                    @if (User.IsInRole("AdminPrincipal") || User.IsInRole("AdminTemporaire"))
                     {
-                        <div class="nav-group-toggle" data-cible="sousMenuUtilisateurs">
-                            <span><i class="bi bi-person-gear me-2"></i> Administration des comptes</span>
+                        <a asp-controller="Home" asp-action="Index" class="nav-link lien-accueil">
+                            <span><i class="bi bi-speedometer2 me-2"></i> Tableau de bord</span>
+                        </a>
+
+                        <div class="nav-group-toggle" data-cible="sousMenuEmployes">
+                            <span><i class="bi bi-people me-2"></i> Employés</span>
                             <i class="bi bi-chevron-down small"></i>
                         </div>
-                        <div class="nav-submenu" id="sousMenuUtilisateurs">
-                            <a asp-controller="Utilisateurs" asp-action="Index">Voir tous les utilisateurs</a>
-                            <a asp-controller="Utilisateurs" asp-action="Create">Nouvel admin secondaire</a>
-                            <a asp-controller="Utilisateurs" asp-action="Actions">Actions des utilisateurs</a>
+                        <div class="nav-submenu" id="sousMenuEmployes">
+                            <a asp-controller="Employes" asp-action="Index">Liste des employés</a>
+                            <a asp-controller="Employes" asp-action="Create">Nouvel employé</a>
+                            <a asp-controller="Employes" asp-action="Rechercher">Rechercher un employé</a>
+                            @if (User.IsInRole("AdminPrincipal"))
+                            {
+                                <a asp-controller="Utilisateurs" asp-action="TousLesUtilisateurs">Comptes &amp; mots de passe</a>
+                            }
                         </div>
+
+                        <div class="nav-group-toggle" data-cible="sousMenuActifs">
+                            <span><i class="bi bi-laptop me-2"></i> Actifs</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </div>
+                        <div class="nav-submenu" id="sousMenuActifs">
+                            <a asp-controller="Actifs" asp-action="Index">Tous les actifs</a>
+                            <a asp-controller="Actifs" asp-action="Create">Nouvel actif</a>
+                            <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Disponible">Disponibles</a>
+                            <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Attribue">Attribués</a>
+                            <a asp-controller="Actifs" asp-action="Index" asp-route-etat="Deteriore">Détériorés</a>
+                        </div>
+
+                        <div class="nav-group-toggle" data-cible="sousMenuOrganisation">
+                            <span><i class="bi bi-diagram-3 me-2"></i> Organisation</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </div>
+                        <div class="nav-submenu" id="sousMenuOrganisation">
+                            <a asp-controller="Agences" asp-action="Index">Agences</a>
+                            <a asp-controller="Departements" asp-action="Index">Départements</a>
+                            <a asp-controller="Divisions" asp-action="Index">Divisions</a>
+                            <a asp-controller="Services" asp-action="Index">Services</a>
+                            <a asp-controller="Unites" asp-action="Index">Unités</a>
+                            <a asp-controller="CategoriesActifs" asp-action="Index">Catégories d'actifs</a>
+                        </div>
+
+                        <div class="nav-group-toggle" data-cible="sousMenuRapports">
+                            <span><i class="bi bi-file-earmark-pdf me-2"></i> Analyses/Statistiques</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </div>
+                        <div class="nav-submenu" id="sousMenuRapports">
+                            <a asp-controller="Rapports" asp-action="Employe">Rapport par employé</a>
+                            <a asp-controller="Rapports" asp-action="Departement">Rapport par agence, département, division, service ou unité</a>
+                            <a asp-controller="Rapports" asp-action="PlageDates">Rapport par plage de dates</a>
+                            <a asp-controller="Rapports" asp-action="Inventaire">Rapports sur les actifs</a>
+                        </div>
+
+                        @if (User.IsInRole("AdminPrincipal"))
+                        {
+                            <div class="nav-group-toggle" data-cible="sousMenuUtilisateurs">
+                                <span><i class="bi bi-person-gear me-2"></i> Administration des comptes</span>
+                                <i class="bi bi-chevron-down small"></i>
+                            </div>
+                            <div class="nav-submenu" id="sousMenuUtilisateurs">
+                                <a asp-controller="Utilisateurs" asp-action="TousLesUtilisateurs">Tous les employés (modifier infos)</a>
+                                <a asp-controller="Utilisateurs" asp-action="Index">Gestion des utilisateurs</a>
+                                <a asp-controller="Utilisateurs" asp-action="Nommer">Nommer un employé admin</a>
+                                <a asp-controller="Utilisateurs" asp-action="CreerTemporaire">Nouveau compte temporaire</a>
+                                <a asp-controller="Utilisateurs" asp-action="Actions">Actions des utilisateurs</a>
+                            </div>
+                        }
+                    }
+                    else if (User.IsInRole("Employe"))
+                    {
+                        <a asp-controller="MonEspace" asp-action="Index" class="nav-link lien-accueil">
+                            <span><i class="bi bi-person-workspace me-2"></i> Mon espace</span>
+                        </a>
                     }
 
-                    <!-- ⚙️ PARAMÈTRES (POUSSÉ AUTOMATIQUEMENT TOUT EN BAS) -->
                     <div class="group-parametres-container">
                         <div class="nav-group-toggle" data-cible="sousMenuParametres">
                             <span><i class="bi bi-gear me-2"></i> Paramètres</span>
                             <i class="bi bi-chevron-down small"></i>
                         </div>
                         <div class="nav-submenu submenu-parametres" id="sousMenuParametres">
-                            <!-- Profil -->
                             <a asp-controller="Compte" asp-action="Profil" class="lien-profil">
                                 <i class="bi bi-person-circle me-2"></i> Profil
                             </a>
-
-                            <!-- Déconnexion -->
                             <form asp-controller="Compte" asp-action="Deconnexion" method="post" class="m-0 p-0">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn-deconnexion-link">
@@ -225,6 +225,24 @@
     }
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        // Rend tous les menus déroulants de l'appli cherchables au clavier (taper au lieu de défiler),
+        // SAUF les menus en cascade (Agence -> Département -> Division -> Service -> Unité) : ceux-là
+        // sont peuplés dynamiquement par du JavaScript qui modifie le <select> d'origine directement,
+        // ce que Choices.js ne détecte pas après son initialisation.
+        document.querySelectorAll('select.form-select').forEach(function (select) {
+        if (select.matches('#selectAgence, #selectDepartement, #selectDivision, #selectService, #selectUnite')) {
+        return;
+        }
+        new Choices(select, {
+        searchEnabled: true,
+        shouldSort: false,
+        itemSelectText: '',
+        searchPlaceholderValue: 'Taper pour chercher...'
+        });
+        });
+    </script>
     <script>
         var sidebar = document.getElementById('ecotrackSidebar');
         var overlay = document.getElementById('sidebarOverlay');

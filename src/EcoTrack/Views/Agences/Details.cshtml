@@ -1,0 +1,26 @@
+﻿@model EcoTrack.Models.Agence
+@{
+    ViewData["Title"] = "Détails de l'agence";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">@Model.Nom</h3>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+<p class="text-muted">Code : @Model.Code | Localisation : @Model.Localisation</p>
+
+<h5 class="mb-3">Départements (@Model.Departements.Count)</h5>
+<ul class="list-group">
+    @foreach (var departement in Model.Departements)
+    {
+        <li class="list-group-item">
+            <a asp-controller="Departements" asp-action="Details" asp-route-id="@departement.Id">@departement.Nom</a>
+        </li>
+    }
+    @if (!Model.Departements.Any())
+    {
+        <li class="list-group-item text-muted">Aucun département dans cette agence.</li>
+    }
+</ul>

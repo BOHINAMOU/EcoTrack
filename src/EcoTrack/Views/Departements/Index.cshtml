@@ -1,17 +1,17 @@
 ﻿@model IEnumerable<EcoTrack.Models.Departement>
 @{
-    ViewData["Title"] = "Agences";
+    ViewData["Title"] = "Départements";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h3 class="mb-0">Agences</h3>
-        <p class="text-muted mb-0">@Model.Count() agence(s) enregistrée(s)</p>
+        <h3 class="mb-0">Départements</h3>
+        <p class="text-muted mb-0">@Model.Count() département(s) enregistré(s)</p>
     </div>
     @if (User.IsInRole("AdminPrincipal"))
     {
         <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Nouvelle agence
+            <i class="bi bi-plus-lg"></i> Nouveau département
         </a>
     }
 </div>
@@ -21,10 +21,8 @@
         <thead>
             <tr>
                 <th>Nom</th>
-                <th>Code</th>
-                <th>Localisation</th>
-                <th>Employés</th>
-                <th>Actifs</th>
+                <th>Agence</th>
+                <th>Divisions</th>
                 <th>Statut</th>
                 <th></th>
             </tr>
@@ -34,10 +32,8 @@
             {
                 <tr class="@(!departement.EstActif ? "table-secondary" : "")">
                     <td><a asp-action="Details" asp-route-id="@departement.Id">@departement.Nom</a></td>
-                    <td>@departement.Code</td>
-                    <td>@departement.Localisation</td>
-                    <td>@departement.Employes.Count</td>
-                    <td>@departement.Actifs.Count</td>
+                    <td>@departement.Agence?.Nom</td>
+                    <td>@departement.Divisions.Count</td>
                     <td>
                         @if (departement.EstActif)
                         {
@@ -49,10 +45,9 @@
                         }
                     </td>
                     <td class="text-end">
-                        <a asp-action="Details" asp-route-id="@departement.Id" class="btn btn-sm btn-outline-secondary">Détails</a>
                         @if (User.IsInRole("AdminPrincipal"))
                         {
-                            <a asp-action="Edit" asp-route-id="@departement.Id" class="btn btn-sm btn-outline-primary">Renommer</a>
+                            <a asp-action="Edit" asp-route-id="@departement.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
                             <form asp-action="BasculerActivation" asp-route-id="@departement.Id" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 @if (departement.EstActif)

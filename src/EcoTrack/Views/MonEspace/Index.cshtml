@@ -1,0 +1,192 @@
+﻿@using EcoTrack.Models
+@{
+    ViewData["Title"] = "Mon espace";
+    var employe = (Employe)ViewBag.Employe;
+    var mesActifs = (List<Actif>)ViewBag.MesActifs;
+    var actifsAgence = (List<Actif>)ViewBag.ActifsAgence;
+    var initiales = $"{employe.Prenom.FirstOrDefault()}{employe.Nom.FirstOrDefault()}".ToString().ToUpper();
+}
+<a href="c:\bohinamou doc\rapport de stage\ecotrack\src\ecotrack\views\monespace\index.cshtml">c:\bohinamou doc\rapport de stage\ecotrack\src\ecotrack\views\monespace\index.cshtml</a>
+
+<style>
+ 
+
+    .mon-espace-hero-banner {
+        position: relative;
+        padding: 35px;
+		min-height: 240px;
+		background-image: url('/images/logo_ecobank.avif');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        overflow: hidden;
+        margin: -1.5rem -2rem 2rem -2rem;
+        width: calc(100% + 4rem);
+        border-radius: 0;
+    }
+
+
+
+
+        .mon-espace-hero-banner::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 30, 60, 0.80);
+            z-index: 0;
+        }
+
+        .mon-espace-hero-banner > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .mon-espace-hero-banner .search-container-glass {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 12px;
+        }
+
+        .mon-espace-hero-banner .form-control {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 8px;
+        }
+
+            .mon-espace-hero-banner .form-control:focus {
+                box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+            }
+</style>
+
+<div class="mon-espace-hero-banner">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="hero-avatar">@initiales</div>
+            <div>
+                <h2 class="fw-bold mb-1 text-white">Bonjour, @employe.Prenom @employe.Nom</h2>
+                <p class="mb-0 text-white-50 small">@employe.Poste — @employe.Agence?.Nom</p>
+            </div>
+        </div>
+        <a asp-action="RapportPdf" class="btn btn-light">
+            <i class="bi bi-file-earmark-pdf"></i> Télécharger mon rapport PDF
+        </a>
+    </div>
+
+    <div class="mt-4">
+        <div class="position-relative search-container-glass">
+            <div class="d-flex align-items-center px-3">
+                <i class="bi bi-search text-white-50 fs-5 me-2"></i>
+                <input type="text" id="rechercheActif" class="form-control" placeholder="Rechercher un de mes actifs (nom, numéro de série, marque...)" autocomplete="off" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-auto">
+        <div class="stat-card" style="min-width: 220px;">
+            <div class="stat-label">Actifs qui me sont attribués</div>
+            <div class="stat-value">@mesActifs.Count</div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="stat-card" style="min-width: 220px;">
+            <div class="stat-label">Actifs disponibles dans mon agence</div>
+            <div class="stat-value">@actifsAgence.Count</div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-2">Mes actifs</h5>
+<div class="table-responsive-wrapper mb-4">
+    <table class="table table-hover" id="tableMesActifs">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Numéro de série</th>
+                <th>Marque / Modèle</th>
+                <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var actif in mesActifs)
+            {
+                <tr class="ligne-actif" data-recherche="@($"{actif.Nom} {actif.NumeroSerie} {actif.Marque} {actif.Modele}".ToLower())">
+                    <td>@actif.Nom</td>
+                    <td>@actif.NumeroSerie</td>
+                    <td>@actif.Marque @actif.Modele</td>
+                    <td>@actif.Etat</td>
+                </tr>
+            }
+            @if (!mesActifs.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">Aucun actif ne vous est attribué pour l'instant.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p id="messageAucunResultatMes" class="text-muted" style="display:none;">Aucun de vos actifs ne correspond à cette recherche.</p>
+</div>
+
+<h5 class="mb-2">Actifs de mon agence</h5>
+<p class="text-muted" style="font-size: 0.85rem;">
+    Actifs partagés de l'agence et actifs actuellement attribués à vos collègues.
+</p>
+<div class="table-responsive-wrapper">
+    <table class="table table-hover" id="tableActifsAgence">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Numéro de série</th>
+                <th>Marque / Modèle</th>
+                <th>État</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var actif in actifsAgence)
+            {
+                <tr class="ligne-actif" data-recherche="@($"{actif.Nom} {actif.NumeroSerie} {actif.Marque} {actif.Modele}".ToLower())">
+                    <td>@actif.Nom</td>
+                    <td>@actif.NumeroSerie</td>
+                    <td>@actif.Marque @actif.Modele</td>
+                    <td>@actif.Etat</td>
+                </tr>
+            }
+            @if (!actifsAgence.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-muted">Aucun autre actif visible dans votre agence.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p id="messageAucunResultatAgence" class="text-muted" style="display:none;">Aucun actif de votre agence ne correspond à cette recherche.</p>
+</div>
+
+@section Scripts {
+    <script>
+        var champRecherche = document.getElementById('rechercheActif');
+
+        champRecherche.addEventListener('input', function () {
+            var terme = champRecherche.value.trim().toLowerCase();
+            filtrerTable('tableMesActifs', 'messageAucunResultatMes', terme);
+            filtrerTable('tableActifsAgence', 'messageAucunResultatAgence', terme);
+        });
+
+        function filtrerTable(idTable, idMessage, terme) {
+            var lignes = document.querySelectorAll('#' + idTable + ' .ligne-actif');
+            var visibles = 0;
+
+            lignes.forEach(function (ligne) {
+                var correspond = ligne.dataset.recherche.indexOf(terme) !== -1;
+                ligne.style.display = correspond ? '' : 'none';
+                if (correspond) { visibles++; }
+            });
+
+            document.getElementById(idMessage).style.display = (lignes.length > 0 && visibles === 0) ? '' : 'none';
+        }
+    </script>
+}

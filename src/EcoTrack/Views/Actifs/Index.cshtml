@@ -19,6 +19,7 @@
     <a asp-action="Index" asp-route-etat="Disponible" class="btn btn-sm @(filtre == "Disponible" ? "btn-primary" : "btn-outline-secondary")">Disponibles</a>
     <a asp-action="Index" asp-route-etat="Attribue" class="btn btn-sm @(filtre == "Attribue" ? "btn-primary" : "btn-outline-secondary")">Attribués</a>
     <a asp-action="Index" asp-route-etat="Deteriore" class="btn btn-sm @(filtre == "Deteriore" ? "btn-primary" : "btn-outline-secondary")">Détériorés</a>
+    <a asp-action="Index" asp-route-etat="EnPanne" class="btn btn-sm @(filtre == "EnPanne" ? "btn-primary" : "btn-outline-secondary")">En panne</a>
 </div>
 
 <div class="table-responsive-wrapper">
@@ -53,6 +54,9 @@
                             case EcoTrack.Enums.EtatActif.Deteriore:
                                 <span class="badge bg-danger">Détérioré</span>
                                 break;
+                            case EcoTrack.Enums.EtatActif.EnPanne:
+                                <span class="badge bg-dark">En panne</span>
+                                break;
                         }
                     </td>
                     <td>
@@ -61,6 +65,12 @@
                             <a asp-controller="Employes" asp-action="Details" asp-route-id="@affectationActive.EmployeId">
                                 @affectationActive.Employe?.Prenom @affectationActive.Employe?.Nom
                             </a>
+                        }
+                        else if (actif.EstPartageAUneUnite)
+                        {
+                            <span class="badge bg-secondary">
+                                @(actif.Agence?.Nom ?? actif.Departement?.Nom ?? actif.Division?.Nom ?? actif.Service?.Nom ?? actif.Unite?.Nom) (partagé)
+                            </span>
                         }
                         else
                         {
@@ -84,6 +94,22 @@
                                 <form asp-action="Reactiver" asp-route-id="@actif.Id" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                                </form>
+                            }
+                            @if (actif.Etat == EcoTrack.Enums.EtatActif.Disponible || actif.Etat == EcoTrack.Enums.EtatActif.Attribue)
+                            {
+                                <form asp-action="MettreEnPanne" asp-route-id="@actif.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Marquer cet actif en panne ? Il sera retiré à son détenteur actuel le cas échéant.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-dark">Mettre en panne</button>
+                                </form>
+                            }
+                            @if (actif.Etat == EcoTrack.Enums.EtatActif.EnPanne)
+                            {
+                                <form asp-action="SortirDePanne" asp-route-id="@actif.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Marquer cet actif comme réparé ? Il sera réattribué à son ancien détenteur si possible.');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Sortir de panne</button>
                                 </form>
                             }
                         }

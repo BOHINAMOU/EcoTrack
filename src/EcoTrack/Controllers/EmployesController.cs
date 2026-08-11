@@ -4,32 +4,49 @@ using EcoTrack.Infrastructure;
 using EcoTrack.Models;
 using EcoTrack.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public class EmployesController : Controller
     {
         private readonly ApplicationDbContext _context;
         private readonly IJournalService _journal;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IEmailSender _emailSender;
 
-        public EmployesController(ApplicationDbContext context, IJournalService journal)
+        public EmployesController(ApplicationDbContext context, IJournalService journal, UserManager<ApplicationUser> userManager, IEmailSender emailSender)
         {
             _context = context;
             _journal = journal;
+            _userManager = userManager;
+            _emailSender = emailSender;
         }
 
         private string UtilisateurConnecteId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+
+        private async Task ChargerListesOrganisation(dynamic model)
+        {
+            model.Agences = await _context.Agences.Where(a => a.EstActif).OrderBy(a => a.Nom).ToListAsync();
+            model.Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+            model.Divisions = await _context.Divisions.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+            model.Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync();
+            model.Unites = await _context.Unites.Where(u => u.EstActif).OrderBy(u => u.Nom).ToListAsync();
+        }
 
         // GET /Employes
         public async Task<IActionResult> Index()
         {
             var employes = await _context.Employes
-                .Include(e => e.Departement)
-                .Include(e => e.Service)
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement!)
+                                .ThenInclude(dep => dep.Agence)
                 .Include(e => e.Affectations.Where(a => a.DateRetrait == null))
                 .OrderBy(e => e.Nom)
                 .ToListAsync();
@@ -56,7 +73,6 @@ namespace EcoTrack.Controllers
             var termeNormalise = terme.Trim().ToLower();
 
             var resultats = await _context.Employes
-                .Include(e => e.Departement)
                 .Where(e => (e.Prenom + " " + e.Nom).ToLower().Contains(termeNormalise)
                          || (e.Nom + " " + e.Prenom).ToLower().Contains(termeNormalise)
                          || (e.Poste != null && e.Poste.ToLower().Contains(termeNormalise)))
@@ -66,7 +82,9 @@ namespace EcoTrack.Controllers
                 {
                     id = e.Id,
                     nomComplet = e.Prenom + " " + e.Nom,
-                    departement = e.Departement != null ? e.Departement.Nom : "—",
+                    departement = e.Unite != null && e.Unite.Service != null && e.Unite.Service.Division != null && e.Unite.Service.Division.Departement != null
+                        ? e.Unite.Service.Division.Departement.Agence!.Nom
+                        : "—",
                     poste = e.Poste ?? "—",
                     estActif = e.EstActif,
                     nombreActifs = e.Affectations.Count(a => a.DateRetrait == null)
@@ -81,11 +99,10 @@ namespace EcoTrack.Controllers
         {
             var viewModel = new EmployeCreerViewModel
             {
-                Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync(),
-                Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync(),
                 ActifsDisponibles = await _context.Actifs.Where(a => a.Etat == EtatActif.Disponible).OrderBy(a => a.Nom).ToListAsync(),
                 Categories = await _context.CategoriesActifs.Where(c => c.EstActif).OrderBy(c => c.Nom).ToListAsync()
             };
+            await ChargerListesOrganisation(viewModel);
 
             return View(viewModel);
         }
@@ -95,19 +112,17 @@ namespace EcoTrack.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EmployeCreerViewModel model)
         {
-            var telephoneComplet = $"{model.Indicatif} {model.NumeroTelephone}".Trim();
             var nomNormalise = (model.Nom ?? string.Empty).Trim().ToLower();
             var prenomNormalise = (model.Prenom ?? string.Empty).Trim().ToLower();
             var emailNormalise = (model.Email ?? string.Empty).Trim().ToLower();
+            var telephoneComplet = $"{model.Indicatif} {model.NumeroTelephone}".Trim();
 
             var emailsExistants = await _context.Employes
                 .Where(e => e.Nom.ToLower() == nomNormalise && e.Prenom.ToLower() == prenomNormalise)
                 .Select(e => e.Email)
                 .ToListAsync();
 
-            var existeDeja = emailsExistants.Any(email => email.ToLower() == emailNormalise);
-
-            if (existeDeja)
+            if (emailsExistants.Any(e => e.ToLower() == emailNormalise))
             {
                 ModelState.AddModelError(string.Empty, "Un employé avec ce nom, ce prénom et cet email existe déjà.");
             }
@@ -122,9 +137,10 @@ namespace EcoTrack.Controllers
                 ModelState.AddModelError(nameof(model.NumeroTelephone), "Ce numéro de téléphone est déjà utilisé par un autre employé.");
             }
 
-            if (!await _context.Services.AnyAsync(s => s.Id == model.ServiceId && s.DepartementId == model.DepartementId))
+            var uniteSelectionnee = await _context.Unites.FindAsync(model.UniteId);
+            if (uniteSelectionnee is null)
             {
-                ModelState.AddModelError(nameof(model.ServiceId), "Le service sélectionné n'appartient pas à cette agence.");
+                ModelState.AddModelError(nameof(model.UniteId), "L'unité sélectionnée est invalide.");
             }
 
             if (model.ModeAttribution == ModeAttributionActif.ActifExistant)
@@ -156,11 +172,10 @@ namespace EcoTrack.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
-                model.Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync();
                 model.ActifsDisponibles = await _context.Actifs.Where(a => a.Etat == EtatActif.Disponible).OrderBy(a => a.Nom).ToListAsync();
                 model.Categories = await _context.CategoriesActifs.Where(c => c.EstActif).OrderBy(c => c.Nom).ToListAsync();
-                model.Indicatifs = EcoTrack.Enums.Indicatifs.Liste;
+                model.IndicatifsListe = EcoTrack.Enums.Indicatifs.Liste;
+                await ChargerListesOrganisation(model);
                 return View(model);
             }
 
@@ -171,12 +186,22 @@ namespace EcoTrack.Controllers
                 Email = model.Email,
                 Telephone = telephoneComplet,
                 Poste = model.Poste,
-                DepartementId = model.DepartementId,
-                ServiceId = model.ServiceId,
+                UniteId = model.UniteId,
+                ServiceId = uniteSelectionnee!.ServiceId,
                 EstActif = true
             };
             _context.Employes.Add(employe);
             await _context.SaveChangesAsync();
+
+            var resultatCompte = await GestionComptesEmployes.CreerCompteSiAbsentAsync(employe, _context, _userManager, _emailSender, model.NomUtilisateur);
+            if (!resultatCompte.Succes)
+            {
+                TempData["Erreur"] = $"L'employé a été créé, mais la création de son compte de connexion a échoué : {resultatCompte.MessageErreur}";
+            }
+            else if (resultatCompte.MessageErreur == "email_non_envoye")
+            {
+                TempData["Erreur"] = $"L'employé a été créé, mais l'email avec ses identifiants n'a pas pu être envoyé. Nom d'utilisateur : {resultatCompte.NomUtilisateurGenere} — Mot de passe temporaire : {resultatCompte.MotDePasseGenere} (à communiquer manuellement).";
+            }
 
             Actif actif;
             bool estNouvelActif = model.ModeAttribution == ModeAttributionActif.NouvelActif;
@@ -223,7 +248,13 @@ namespace EcoTrack.Controllers
         [Authorize(Roles = "AdminPrincipal")]
         public async Task<IActionResult> Edit(int id)
         {
-            var employe = await _context.Employes.FindAsync(id);
+            var employe = await _context.Employes
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
             if (employe is null)
             {
                 return NotFound();
@@ -240,11 +271,9 @@ namespace EcoTrack.Controllers
                 Indicatif = indicatif,
                 NumeroTelephone = numero,
                 Poste = employe.Poste,
-                DepartementId = employe.DepartementId,
-                ServiceId = employe.ServiceId,
-                Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync(),
-                Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync()
+                UniteId = employe.UniteId
             };
+            await ChargerListesOrganisation(viewModel);
 
             return View(viewModel);
         }
@@ -284,16 +313,16 @@ namespace EcoTrack.Controllers
                 ModelState.AddModelError(nameof(model.NumeroTelephone), "Ce numéro de téléphone est déjà utilisé par un autre employé.");
             }
 
-            if (!await _context.Services.AnyAsync(s => s.Id == model.ServiceId && s.DepartementId == model.DepartementId))
+            var uniteSelectionnee = await _context.Unites.FindAsync(model.UniteId);
+            if (uniteSelectionnee is null)
             {
-                ModelState.AddModelError(nameof(model.ServiceId), "Le service sélectionné n'appartient pas à cette agence.");
+                ModelState.AddModelError(nameof(model.UniteId), "L'unité sélectionnée est invalide.");
             }
 
             if (!ModelState.IsValid)
             {
-                model.Departements = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
-                model.Services = await _context.Services.Where(s => s.EstActif).OrderBy(s => s.Nom).ToListAsync();
-                model.Indicatifs = EcoTrack.Enums.Indicatifs.Liste;
+                model.IndicatifsListe = EcoTrack.Enums.Indicatifs.Liste;
+                await ChargerListesOrganisation(model);
                 return View(model);
             }
 
@@ -308,8 +337,8 @@ namespace EcoTrack.Controllers
             employe.Email = model.Email;
             employe.Telephone = telephoneComplet;
             employe.Poste = model.Poste;
-            employe.DepartementId = model.DepartementId;
-            employe.ServiceId = model.ServiceId;
+            employe.UniteId = model.UniteId;
+            employe.ServiceId = uniteSelectionnee!.ServiceId;
 
             await _context.SaveChangesAsync();
 
@@ -349,8 +378,11 @@ namespace EcoTrack.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var employe = await _context.Employes
-                .Include(e => e.Departement)
-                .Include(e => e.Service)
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement!)
+                                .ThenInclude(dep => dep.Agence)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (employe is null)

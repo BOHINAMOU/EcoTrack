@@ -11,5 +11,8 @@ namespace EcoTrack.Models
         public string? CreeParId { get; set; }
 
         public bool DoitChangerMotDePasse { get; set; } = false;
+
+        /// <summary>Si renseignée, l'accès admin (rôle AdminTemporaire) de ce compte est retiré automatiquement après cette date.</summary>
+        public DateTime? DateExpirationAcces { get; set; }
     }
 }

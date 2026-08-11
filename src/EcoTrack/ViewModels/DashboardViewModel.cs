@@ -9,5 +9,9 @@
         public int NombreActifsDisponibles { get; set; }
         public int NombreActifsAttribues { get; set; }
         public int NombreActifsDeteriores { get; set; }
+        public int NombreActifsEnPanne { get; set; }
+        public int NombreAgences { get; set; }
+        public int NombreDepartements { get; set; }
+        public int NombreServices { get; set; }
     }
 }

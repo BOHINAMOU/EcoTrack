@@ -15,7 +15,7 @@
 
 <div class="mb-3 position-relative" style="max-width: 400px;">
     <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
-    <input type="text" id="filtreEmployes" class="form-control ps-5" placeholder="Filtrer par nom, agence ou poste..." autocomplete="off" />
+    <input type="text" id="filtreEmployes" class="form-control ps-5" placeholder="Filtrer par nom, agence, unité..." autocomplete="off" />
 </div>
 
 <div class="table-responsive-wrapper">
@@ -24,7 +24,7 @@
             <tr>
                 <th>Nom complet</th>
                 <th>Agence</th>
-                <th>Service</th>
+                <th>Unité</th>
                 <th>Poste</th>
                 <th>Actifs attribués</th>
                 <th>Statut</th>
@@ -35,10 +35,10 @@
             @foreach (var employe in Model)
             {
                 <tr class="@(!employe.EstActif ? "table-secondary" : "")"
-                    data-recherche="@($"{employe.Prenom} {employe.Nom} {employe.Departement?.Nom} {employe.Service?.Nom} {employe.Poste}".ToLower())">
+                    data-recherche="@($"{employe.Prenom} {employe.Nom} {employe.Agence?.Nom} {employe.Unite?.Nom} {employe.Poste}".ToLower())">
                     <td><a asp-action="Details" asp-route-id="@employe.Id">@employe.Prenom @employe.Nom</a></td>
-                    <td>@employe.Departement?.Nom</td>
-                    <td>@employe.Service?.Nom</td>
+                    <td>@employe.Agence?.Nom</td>
+                    <td>@employe.Unite?.Nom</td>
                     <td>@(employe.Poste ?? "—")</td>
                     <td>@employe.Affectations.Count</td>
                     <td>
@@ -74,30 +74,21 @@
     </table>
 </div>
 
-<p id="aucunResultat" class="text-muted" style="display:none;">Aucun employé ne correspond à votre recherche.</p>
-
 @if (!Model.Any())
 {
     <p class="text-muted">Aucun employé enregistré pour l'instant.</p>
 }
 
 @section Scripts {
-<script>
-    var champFiltre = document.getElementById('filtreEmployes');
-    var lignes = document.querySelectorAll('#tableEmployes tbody tr');
-    var messageAucunResultat = document.getElementById('aucunResultat');
+    <script>
+        var champFiltre = document.getElementById('filtreEmployes');
+        var lignes = document.querySelectorAll('#tableEmployes tbody tr');
 
-    champFiltre.addEventListener('input', function () {
-        var terme = champFiltre.value.trim().toLowerCase();
-        var nombreVisibles = 0;
-
-        lignes.forEach(function (ligne) {
-            var correspond = ligne.dataset.recherche.indexOf(terme) !== -1;
-            ligne.style.display = correspond ? '' : 'none';
-            if (correspond) { nombreVisibles++; }
+        champFiltre.addEventListener('input', function () {
+            var terme = champFiltre.value.trim().toLowerCase();
+            lignes.forEach(function (ligne) {
+                ligne.style.display = ligne.dataset.recherche.indexOf(terme) !== -1 ? '' : 'none';
+            });
         });
-
-        messageAucunResultat.style.display = nombreVisibles === 0 ? '' : 'none';
-    });
-</script>
+    </script>
 }

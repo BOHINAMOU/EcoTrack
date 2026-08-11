@@ -1,13 +1,12 @@
 ﻿using EcoTrack.Data;
 using EcoTrack.Models;
-using EcoTrack.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public class DepartementsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,9 +20,9 @@ namespace EcoTrack.Controllers
         public async Task<IActionResult> Index()
         {
             var departements = await _context.Departements
-                .Include(d => d.Employes)
-                .Include(d => d.Actifs)
-                .OrderBy(d => d.Nom)
+                .Include(d => d.Agence)
+                .Include(d => d.Divisions)
+                .OrderBy(d => d.Agence!.Nom).ThenBy(d => d.Nom)
                 .ToListAsync();
 
             return View(departements);
@@ -33,10 +32,8 @@ namespace EcoTrack.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var departement = await _context.Departements
-                .Include(d => d.Employes)
-                    .ThenInclude(e => e.Affectations.Where(a => a.DateRetrait == null))
-                        .ThenInclude(a => a.Actif)
-                            .ThenInclude(actif => actif!.CategorieActif)
+                .Include(d => d.Agence)
+                .Include(d => d.Divisions)
                 .FirstOrDefaultAsync(d => d.Id == id);
 
             if (departement is null)
@@ -44,78 +41,34 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            var actifsDetenus = departement.Employes
-                .SelectMany(e => e.Affectations)
-                .Select(a => a.Actif)
-                .Where(a => a is not null)
-                .Select(a => a!)
-                .ToList();
-
-            var palette = new[] { "#0d3b66", "#ffc107", "#2e8540", "#d9534f", "#6f42c1", "#17a2b8", "#fd7e14" };
-
-            var repartition = actifsDetenus
-                .GroupBy(a => a.CategorieActif?.Nom ?? "Non catégorisé")
-                .Select((groupe, index) => new RepartitionCategorie
-                {
-                    NomCategorie = groupe.Key,
-                    Nombre = groupe.Count(),
-                    Pourcentage = actifsDetenus.Count == 0
-                        ? 0
-                        : Math.Round(groupe.Count() * 100.0 / actifsDetenus.Count, 1),
-                    CouleurHex = palette[index % palette.Length]
-                })
-                .OrderByDescending(r => r.Nombre)
-                .ToList();
-
-            var employesIds = departement.Employes.Select(e => e.Id).ToList();
-
-            var dernieresAffectations = await _context.Affectations
-                .Include(a => a.Actif)
-                .Include(a => a.Employe)
-                .Where(a => employesIds.Contains(a.EmployeId))
-                .OrderByDescending(a => a.DateAffectation)
-                .Take(5)
-                .ToListAsync();
-
-            var viewModel = new DepartementDetailsViewModel
-            {
-                Departement = departement,
-                RepartitionParCategorie = repartition,
-                DernieresAffectations = dernieresAffectations
-            };
-
-            return View(viewModel);
+            return View(departement);
         }
 
         // GET /Departements/Create
-        [Authorize(Roles = "AdminPrincipal")]
-        public IActionResult Create()
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
+        public async Task<IActionResult> Create()
         {
+            ViewBag.Agences = await _context.Agences.Where(a => a.EstActif).OrderBy(a => a.Nom).ToListAsync();
             return View();
         }
 
         // POST /Departements/Create
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Departement departement)
         {
-            // Vérification de sécurité : s'assurer que le Nom n'est ni null ni vide
-            if (!string.IsNullOrWhiteSpace(departement.Nom))
+            var existeDeja = await _context.Departements
+                .AnyAsync(d => d.AgenceId == departement.AgenceId && d.Nom.ToLower() == departement.Nom.ToLower());
+
+            if (existeDeja)
             {
-                var nomSaisi = departement.Nom.Trim();
-
-                var existeDeja = await _context.Departements
-                    .AnyAsync(d => d.Nom != null && d.Nom.ToLower() == nomSaisi.ToLower());
-
-                if (existeDeja)
-                {
-                    ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
-                }
+                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà dans cette agence.");
             }
 
             if (!ModelState.IsValid)
             {
+                ViewBag.Agences = await _context.Agences.Where(a => a.EstActif).OrderBy(a => a.Nom).ToListAsync();
                 return View(departement);
             }
 
@@ -127,7 +80,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /Departements/Edit/5
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         public async Task<IActionResult> Edit(int id)
         {
             var departement = await _context.Departements.FindAsync(id);
@@ -137,12 +90,13 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
+            ViewBag.Agences = await _context.Agences.Where(a => a.EstActif).OrderBy(a => a.Nom).ToListAsync();
             return View(departement);
         }
 
         // POST /Departements/Edit/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Departement departement)
         {
@@ -151,22 +105,17 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            // Sécurité contre les valeurs nuls dans Edit
-            if (!string.IsNullOrWhiteSpace(departement.Nom))
+            var existeDeja = await _context.Departements
+                .AnyAsync(d => d.Id != departement.Id && d.AgenceId == departement.AgenceId && d.Nom.ToLower() == departement.Nom.ToLower());
+
+            if (existeDeja)
             {
-                var nomSaisi = departement.Nom.Trim();
-
-                var existeDeja = await _context.Departements
-                    .AnyAsync(d => d.Id != departement.Id && d.Nom != null && d.Nom.ToLower() == nomSaisi.ToLower());
-
-                if (existeDeja)
-                {
-                    ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà.");
-                }
+                ModelState.AddModelError(nameof(Departement.Nom), "Un département avec ce nom existe déjà dans cette agence.");
             }
 
             if (!ModelState.IsValid)
             {
+                ViewBag.Agences = await _context.Agences.Where(a => a.EstActif).OrderBy(a => a.Nom).ToListAsync();
                 return View(departement);
             }
 
@@ -179,7 +128,7 @@ namespace EcoTrack.Controllers
 
         // POST /Departements/BasculerActivation/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {

@@ -25,6 +25,23 @@ namespace EcoTrack.Controllers
             _emailSender = emailSender;
         }
 
+        private async Task<IActionResult> RedirectionParDefautAsync(ApplicationUser utilisateur)
+        {
+            var roles = await _userManager.GetRolesAsync(utilisateur);
+
+            if (roles.Contains(DbInitializer.RoleAdminPrincipal) || roles.Contains(DbInitializer.RoleAdminTemporaire))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            if (roles.Contains(DbInitializer.RoleEmploye))
+            {
+                return RedirectToAction("Index", "MonEspace");
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+
         [HttpGet]
         public IActionResult Connexion()
         {
@@ -53,6 +70,11 @@ namespace EcoTrack.Controllers
                 if (utilisateurConnecte is not null && utilisateurConnecte.DoitChangerMotDePasse)
                 {
                     return RedirectToAction("ChangerMotDePasse");
+                }
+
+                if (utilisateurConnecte is not null)
+                {
+                    return await RedirectionParDefautAsync(utilisateurConnecte);
                 }
 
                 return RedirectToAction("Index", "Home");
@@ -170,7 +192,7 @@ namespace EcoTrack.Controllers
 
             await _signInManager.RefreshSignInAsync(utilisateur);
 
-            return RedirectToAction("Index", "Home");
+            return await RedirectionParDefautAsync(utilisateur);
         }
 
         // GET /Compte/Profil
@@ -248,7 +270,7 @@ namespace EcoTrack.Controllers
             await _signInManager.RefreshSignInAsync(utilisateur);
 
             TempData["Succes"] = "Vos informations ont été mises à jour.";
-            return RedirectToAction("Index", "Home");
+            return await RedirectionParDefautAsync(utilisateur);
         }
     }
 }

@@ -56,6 +56,7 @@ namespace EcoTrack.Controllers
                 EtatActif.Disponible => "Disponible",
                 EtatActif.Attribue => "Attribué",
                 EtatActif.Deteriore => "Détérioré",
+                EtatActif.EnPanne => "En panne",
                 _ => null
             };
 
@@ -145,6 +146,7 @@ namespace EcoTrack.Controllers
                                 EtatActif.Disponible => "Disponible",
                                 EtatActif.Attribue => "Attribué",
                                 EtatActif.Deteriore => "Détérioré",
+                                EtatActif.EnPanne => "En panne",
                                 _ => "—"
                             };
 
@@ -153,6 +155,7 @@ namespace EcoTrack.Controllers
                                 EtatActif.Disponible => Colors.Green.Darken1,
                                 EtatActif.Attribue => "#0d3b66",
                                 EtatActif.Deteriore => Colors.Red.Darken1,
+                                EtatActif.EnPanne => "#212529",
                                 _ => "#000000"
                             };
 

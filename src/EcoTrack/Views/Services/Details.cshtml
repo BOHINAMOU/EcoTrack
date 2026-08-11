@@ -1,0 +1,26 @@
+﻿@model EcoTrack.Models.Service
+@{
+    ViewData["Title"] = "Détails du service";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">@Model.Nom</h3>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+<p class="text-muted">Division : @Model.Division?.Nom</p>
+
+<h5 class="mb-3">Unités (@Model.Unites.Count)</h5>
+<ul class="list-group">
+    @foreach (var unite in Model.Unites)
+    {
+        <li class="list-group-item">
+            <a asp-controller="Unites" asp-action="Details" asp-route-id="@unite.Id">@unite.Nom</a>
+        </li>
+    }
+    @if (!Model.Unites.Any())
+    {
+        <li class="list-group-item text-muted">Aucune unité dans ce service.</li>
+    }
+</ul>

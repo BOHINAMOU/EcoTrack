@@ -4,6 +4,7 @@
     {
         Disponible = 0,
         Attribue = 1,
-        Deteriore = 2
+        Deteriore = 2,
+        EnPanne = 3
     }
 }

@@ -42,6 +42,49 @@
                 </select>
                 <span asp-validation-for="CategorieActifId" class="text-danger"></span>
             </div>
+            <div class="col-md-12 mb-3">
+                <label asp-for="ProprietaireUnite" class="form-label"></label>
+                <select asp-for="ProprietaireUnite" class="form-select">
+                    <option value="">-- Aucun (actif disponible) --</option>
+                    <optgroup label="Employé">
+                        @foreach (var e in Model.Employes)
+                        {
+                            <option value="EM:@e.Id">@e.Prenom @e.Nom</option>
+                        }
+                    </optgroup>
+                    <optgroup label="Agence">
+                        @foreach (var a in Model.Agences)
+                        {
+                            <option value="AG:@a.Id">@a.Nom</option>
+                        }
+                    </optgroup>
+                    <optgroup label="Département">
+                        @foreach (var d in Model.Departements)
+                        {
+                            <option value="DP:@d.Id">@d.Nom</option>
+                        }
+                    </optgroup>
+                    <optgroup label="Division">
+                        @foreach (var d in Model.Divisions)
+                        {
+                            <option value="DV:@d.Id">@d.Nom</option>
+                        }
+                    </optgroup>
+                    <optgroup label="Service">
+                        @foreach (var s in Model.Services)
+                        {
+                            <option value="SV:@s.Id">@s.Nom</option>
+                        }
+                    </optgroup>
+                    <optgroup label="Unité">
+                        @foreach (var u in Model.Unites)
+                        {
+                            <option value="UN:@u.Id">@u.Nom</option>
+                        }
+                    </optgroup>
+                </select>
+                <div class="form-text">À un employé précis, ou à toute une unité (agence, département, division, service) si l'actif est partagé.</div>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">Créer</button>
@@ -50,5 +93,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

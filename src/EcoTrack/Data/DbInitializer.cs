@@ -6,7 +6,8 @@ namespace EcoTrack.Data
     public static class DbInitializer
     {
         public const string RoleAdminPrincipal = "AdminPrincipal";
-        public const string RoleAdminSecondaire = "AdminSecondaire";
+        public const string RoleAdminTemporaire = "AdminTemporaire";
+        public const string RoleEmploye = "Employe";
 
         public static async Task SeedAsync(
             IServiceProvider services,
@@ -19,7 +20,8 @@ namespace EcoTrack.Data
             foreach (var role in new[]
             {
                 RoleAdminPrincipal,
-                RoleAdminSecondaire
+                RoleAdminTemporaire,
+                RoleEmploye,
             })
             {
                 if (!await roleManager.RoleExistsAsync(role))

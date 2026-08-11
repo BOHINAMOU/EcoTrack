@@ -1,0 +1,60 @@
+﻿@model EcoTrack.ViewModels.ModifierEmployeCompteViewModel
+@{
+    ViewData["Title"] = "Modifier l'employé";
+    var employeId = (int)ViewBag.EmployeId;
+}
+
+<h3>Modifier : @Model.Prenom @Model.Nom</h3>
+<p class="text-muted">Informations de l'employé et de son compte de connexion.</p>
+
+<div class="card p-4" style="max-width: 600px;">
+    <form asp-action="ModifierEmploye" asp-route-id="@employeId" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="Nom" class="form-label"></label>
+                <input asp-for="Nom" class="form-control" />
+                <span asp-validation-for="Nom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Prenom" class="form-label"></label>
+                <input asp-for="Prenom" class="form-control" />
+                <span asp-validation-for="Prenom" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="NomUtilisateur" class="form-label"></label>
+                <input asp-for="NomUtilisateur" class="form-control" />
+                <span asp-validation-for="NomUtilisateur" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Poste" class="form-label"></label>
+                <input asp-for="Poste" class="form-control" />
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="Indicatif" class="form-label"></label>
+                <input asp-for="Indicatif" class="form-control" />
+            </div>
+            <div class="col-md-3 mb-3">
+                <label asp-for="NumeroTelephone" class="form-label"></label>
+                <input asp-for="NumeroTelephone" class="form-control" inputmode="numeric" pattern="[0-9]*" />
+                <span asp-validation-for="NumeroTelephone" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-action="TousLesUtilisateurs" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

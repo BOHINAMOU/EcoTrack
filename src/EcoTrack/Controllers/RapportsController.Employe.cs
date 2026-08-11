@@ -27,7 +27,10 @@ namespace EcoTrack.Controllers
         public async Task<IActionResult> Employe(int? employeId)
         {
             var employesRequete = _context.Employes
-                .Include(e => e.Departement)
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement!)
                 .Include(e => e.Service)
                 .AsQueryable();
 
@@ -126,7 +129,7 @@ namespace EcoTrack.Controllers
                             {
                                 identite.Item().Text($"{employe.Prenom} {employe.Nom}").Bold().FontSize(13).FontColor("#0d3b66");
                                 identite.Item().Text($"{employe.Poste ?? "Poste non renseigné"}").FontSize(9).FontColor(Colors.Grey.Darken1);
-                                identite.Item().Text($"{employe.Departement?.Nom} — {employe.Service?.Nom}").FontSize(9).FontColor(Colors.Grey.Darken1);
+                                identite.Item().Text($"{employe.DepartementOrg?.Nom} — {employe.Service?.Nom}").FontSize(9).FontColor(Colors.Grey.Darken1);
                             });
                             row.RelativeItem().AlignRight().Column(contact =>
                             {

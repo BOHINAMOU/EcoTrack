@@ -18,7 +18,7 @@
 
 <div class="mb-3 position-relative" style="max-width: 400px;">
     <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#9ca3af;"></i>
-    <input type="text" id="filtreServices" class="form-control ps-5" placeholder="Filtrer par nom ou agence..." autocomplete="off" />
+    <input type="text" id="filtreServices" class="form-control ps-5" placeholder="Filtrer par nom ou division..." autocomplete="off" />
 </div>
 
 <div class="table-responsive-wrapper">
@@ -26,8 +26,8 @@
         <thead>
             <tr>
                 <th>Nom</th>
-                <th>Agence</th>
-                <th>Employés</th>
+                <th>Division</th>
+                <th>Unités</th>
                 <th>Statut</th>
                 <th></th>
             </tr>
@@ -36,10 +36,10 @@
             @foreach (var service in Model)
             {
                 <tr class="@(!service.EstActif ? "table-secondary" : "")"
-                    data-recherche="@($"{service.Nom} {service.Departement?.Nom}".ToLower())">
-                    <td>@service.Nom</td>
-                    <td>@service.Departement?.Nom</td>
-                    <td>@service.Employes.Count</td>
+                    data-recherche="@($"{service.Nom} {service.Division?.Nom}".ToLower())">
+                    <td><a asp-action="Details" asp-route-id="@service.Id">@service.Nom</a></td>
+                    <td>@service.Division?.Nom</td>
+                    <td>@service.Unites.Count</td>
                     <td>
                         @if (service.EstActif)
                         {
@@ -73,30 +73,21 @@
     </table>
 </div>
 
-<p id="aucunResultatServices" class="text-muted" style="display:none;">Aucun service ne correspond à votre recherche.</p>
-
 @if (!Model.Any())
 {
     <p class="text-muted">Aucun service enregistré pour l'instant.</p>
 }
 
 @section Scripts {
-<script>
-    var champFiltre = document.getElementById('filtreServices');
-    var lignes = document.querySelectorAll('#tableServices tbody tr');
-    var messageAucunResultat = document.getElementById('aucunResultatServices');
+    <script>
+        var champFiltre = document.getElementById('filtreServices');
+        var lignes = document.querySelectorAll('#tableServices tbody tr');
 
-    champFiltre.addEventListener('input', function () {
-        var terme = champFiltre.value.trim().toLowerCase();
-        var nombreVisibles = 0;
-
-        lignes.forEach(function (ligne) {
-            var correspond = ligne.dataset.recherche.indexOf(terme) !== -1;
-            ligne.style.display = correspond ? '' : 'none';
-            if (correspond) { nombreVisibles++; }
+        champFiltre.addEventListener('input', function () {
+            var terme = champFiltre.value.trim().toLowerCase();
+            lignes.forEach(function (ligne) {
+                ligne.style.display = ligne.dataset.recherche.indexOf(terme) !== -1 ? '' : 'none';
+            });
         });
-
-        messageAucunResultat.style.display = nombreVisibles === 0 ? '' : 'none';
-    });
-</script>
+    </script>
 }

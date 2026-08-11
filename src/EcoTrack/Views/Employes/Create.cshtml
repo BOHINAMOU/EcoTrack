@@ -31,7 +31,7 @@
             <div class="col-md-3 mb-3">
                 <label asp-for="Indicatif" class="form-label"></label>
                 <select asp-for="Indicatif" class="form-select">
-                    @foreach (var (code, pays) in Model.Indicatifs)
+                    @foreach (var (code, pays) in Model.IndicatifsListe)
                     {
                         <option value="@code">@code (@pays)</option>
                     }
@@ -45,27 +45,55 @@
             <div class="col-md-6 mb-3">
                 <label asp-for="Poste" class="form-label"></label>
                 <input asp-for="Poste" class="form-control" />
-                <span asp-validation-for="Poste" class="text-danger"></span>
             </div>
             <div class="col-md-6 mb-3">
-                <label asp-for="DepartementId" class="form-label">Agence</label>
-                <select asp-for="DepartementId" id="selectAgence" class="form-select"
-                        asp-items="@(new SelectList(Model.Departements, "Id", "Nom"))">
-                    <option value="">-- Choisir --</option>
-                </select>
-                <span asp-validation-for="DepartementId" class="text-danger"></span>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label asp-for="ServiceId" class="form-label"></label>
-                <select asp-for="ServiceId" id="selectService" class="form-select">
-                    <option value="">-- Choisissez d'abord une agence --</option>
-                </select>
-                <span asp-validation-for="ServiceId" class="text-danger"></span>
+                <label asp-for="NomUtilisateur" class="form-label"></label>
+                <input asp-for="NomUtilisateur" class="form-control" placeholder="Laisser vide pour générer automatiquement" />
+                <span asp-validation-for="NomUtilisateur" class="text-danger"></span>
             </div>
         </div>
 
         <hr class="my-4" />
+        <h5 class="mb-3">Positionnement organisationnel</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Agence</label>
+                <select id="selectAgence" class="form-select">
+                    <option value="">-- Choisir --</option>
+                    @foreach (var a in Model.Agences)
+                    {
+                        <option value="@a.Id">@a.Nom</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Département</label>
+                <select id="selectDepartement" class="form-select" disabled>
+                    <option value="">-- Choisir l'agence d'abord --</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Division</label>
+                <select id="selectDivision" class="form-select" disabled>
+                    <option value="">-- Choisir le département d'abord --</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Service</label>
+                <select id="selectService" class="form-select" disabled>
+                    <option value="">-- Choisir la division d'abord --</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label asp-for="UniteId" class="form-label">Unité</label>
+                <select asp-for="UniteId" id="selectUnite" name="UniteId" class="form-select" disabled required>
+                    <option value="">-- Choisir le service d'abord --</option>
+                </select>
+                <span asp-validation-for="UniteId" class="text-danger"></span>
+            </div>
+        </div>
 
+        <hr class="my-4" />
         <h5 class="mb-3">Attribution d'un actif <span class="text-danger">*</span></h5>
 
         <div class="mb-3">
@@ -87,7 +115,6 @@
                     asp-items="@(new SelectList(Model.ActifsDisponibles, "Id", "Nom"))">
                 <option value="">-- Choisir un actif disponible --</option>
             </select>
-            <span asp-validation-for="ActifExistantId" class="text-danger"></span>
             @if (!Model.ActifsDisponibles.Any())
             {
                 <div class="form-text text-warning">Aucun actif disponible en stock actuellement.</div>
@@ -119,7 +146,6 @@
                         asp-items="@(new SelectList(Model.Categories, "Id", "Nom"))">
                     <option value="">-- Choisir --</option>
                 </select>
-                <span asp-validation-for="NouvelActifCategorieId" class="text-danger"></span>
             </div>
         </div>
 
@@ -129,8 +155,11 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
     <script>
+        // --- Bascule actif existant / nouvel actif ---
         var radioExistant = document.getElementById('modeExistant');
         var radioNouveau = document.getElementById('modeNouveau');
         var blocExistant = document.getElementById('blocActifExistant');
@@ -141,41 +170,65 @@
             blocExistant.style.display = estExistant ? '' : 'none';
             blocNouveau.style.display = estExistant ? 'none' : '';
         }
-
         radioExistant.addEventListener('change', basculerAffichage);
         radioNouveau.addEventListener('change', basculerAffichage);
         basculerAffichage();
 
-        var tousLesServices = @Html.Raw(Json.Serialize(Model.Services.Select(s => new { id = s.Id, nom = s.Nom, departementId = s.DepartementId })));
-        var selectAgence = document.getElementById('selectAgence');
-        var selectService = document.getElementById('selectService');
+        // --- Cascade organisationnelle à 5 niveaux, avec recherche au clavier (Choices.js) ---
+        var tousDepartements = @Html.Raw(Json.Serialize(Model.Departements.Select(d => new { id = d.Id, nom = d.Nom, agenceId = d.AgenceId })));
+        var toutesDivisions = @Html.Raw(Json.Serialize(Model.Divisions.Select(d => new { id = d.Id, nom = d.Nom, departementId = d.DepartementId })));
+        var tousServices = @Html.Raw(Json.Serialize(Model.Services.Select(s => new { id = s.Id, nom = s.Nom, divisionId = s.DivisionId })));
+        var toutesUnites = @Html.Raw(Json.Serialize(Model.Unites.Select(u => new { id = u.Id, nom = u.Nom, serviceId = u.ServiceId })));
 
-        function rafraichirServices() {
-            var agenceId = selectAgence.value;
-            selectService.innerHTML = '';
+        var selAgence = document.getElementById('selectAgence');
+        var selDepartement = document.getElementById('selectDepartement');
+        var selDivision = document.getElementById('selectDivision');
+        var selService = document.getElementById('selectService');
+        var selUnite = document.getElementById('selectUnite');
 
-            if (!agenceId) {
-                selectService.innerHTML = '<option value="">-- Choisissez d\'abord une agence --</option>';
-                return;
-            }
+        var optionsChoices = { searchEnabled: true, shouldSort: false, itemSelectText: '', searchPlaceholderValue: 'Taper pour chercher...' };
+        var choicesAgence = new Choices(selAgence, optionsChoices);
+        var choicesDepartement = new Choices(selDepartement, optionsChoices);
+        var choicesDivision = new Choices(selDivision, optionsChoices);
+        var choicesService = new Choices(selService, optionsChoices);
+        var choicesUnite = new Choices(selUnite, optionsChoices);
 
-            var servicesFiltres = tousLesServices.filter(function (s) { return s.departementId == agenceId; });
-
-            if (servicesFiltres.length === 0) {
-                selectService.innerHTML = '<option value="">Aucun service pour cette agence</option>';
-                return;
-            }
-
-            selectService.innerHTML = '<option value="">-- Choisir --</option>';
-            servicesFiltres.forEach(function (s) {
-                var option = document.createElement('option');
-                option.value = s.id;
-                option.textContent = s.nom;
-                selectService.appendChild(option);
+        function remplir(instance, options, texteVide) {
+            var liste = [{ value: '', label: texteVide }];
+            options.forEach(function (o) {
+                liste.push({ value: String(o.id), label: o.nom });
             });
+            instance.setChoices(liste, 'value', 'label', true);
         }
 
-        selectAgence.addEventListener('change', rafraichirServices);
-        rafraichirServices();
+        selAgence.addEventListener('change', function () {
+            var liste = tousDepartements.filter(function (d) { return d.agenceId == selAgence.value; });
+            remplir(choicesDepartement, liste, '-- Choisir --');
+            selAgence.value ? choicesDepartement.enable() : choicesDepartement.disable();
+            remplir(choicesDivision, [], '-- Choisir le département d\'abord --'); choicesDivision.disable();
+            remplir(choicesService, [], '-- Choisir la division d\'abord --'); choicesService.disable();
+            remplir(choicesUnite, [], '-- Choisir le service d\'abord --'); choicesUnite.disable();
+        });
+
+        selDepartement.addEventListener('change', function () {
+            var liste = toutesDivisions.filter(function (d) { return d.departementId == selDepartement.value; });
+            remplir(choicesDivision, liste, '-- Choisir --');
+            selDepartement.value ? choicesDivision.enable() : choicesDivision.disable();
+            remplir(choicesService, [], '-- Choisir la division d\'abord --'); choicesService.disable();
+            remplir(choicesUnite, [], '-- Choisir le service d\'abord --'); choicesUnite.disable();
+        });
+
+        selDivision.addEventListener('change', function () {
+            var liste = tousServices.filter(function (s) { return s.divisionId == selDivision.value; });
+            remplir(choicesService, liste, '-- Choisir --');
+            selDivision.value ? choicesService.enable() : choicesService.disable();
+            remplir(choicesUnite, [], '-- Choisir le service d\'abord --'); choicesUnite.disable();
+        });
+
+        selService.addEventListener('change', function () {
+            var liste = toutesUnites.filter(function (u) { return u.serviceId == selService.value; });
+            remplir(choicesUnite, liste, '-- Choisir --');
+            selService.value ? choicesUnite.enable() : choicesUnite.disable();
+        });
     </script>
 }

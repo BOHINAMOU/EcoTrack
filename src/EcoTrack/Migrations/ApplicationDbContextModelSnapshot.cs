@@ -30,6 +30,9 @@ namespace EcoTrack.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AgenceId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CategorieActifId")
                         .HasColumnType("integer");
 
@@ -37,6 +40,9 @@ namespace EcoTrack.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int?>("DepartementId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DivisionId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Etat")
@@ -60,14 +66,25 @@ namespace EcoTrack.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("UniteId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AgenceId");
 
                     b.HasIndex("CategorieActifId");
 
                     b.HasIndex("DepartementId");
 
-                    b.HasIndex("NumeroSerie")
-                        .IsUnique();
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("UniteId");
 
                     b.ToTable("Actifs");
                 });
@@ -105,85 +122,33 @@ namespace EcoTrack.Migrations
                     b.ToTable("Affectations");
                 });
 
-            modelBuilder.Entity("EcoTrack.Models.ApplicationUser", b =>
+            modelBuilder.Entity("EcoTrack.Models.Agence", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<int>("AccessFailedCount")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CreeParId")
-                        .HasColumnType("text");
+                    b.Property<string>("Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
-                    b.Property<DateTime>("DateCreation")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("DoitChangerMotDePasse")
+                    b.Property<bool>("EstActif")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Localisation")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Nom")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Prenom")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
-
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("Agences");
                 });
 
             modelBuilder.Entity("EcoTrack.Models.CategorieActif", b =>
@@ -219,16 +184,11 @@ namespace EcoTrack.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Code")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<int>("AgenceId")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("EstActif")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("Localisation")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Nom")
                         .IsRequired()
@@ -237,7 +197,35 @@ namespace EcoTrack.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AgenceId");
+
                     b.ToTable("Departements");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Division", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DepartementId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("EstActif")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartementId");
+
+                    b.ToTable("Divisions");
                 });
 
             modelBuilder.Entity("EcoTrack.Models.Employe", b =>
@@ -248,8 +236,8 @@ namespace EcoTrack.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DepartementId")
-                        .HasColumnType("integer");
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -280,11 +268,17 @@ namespace EcoTrack.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<int>("UniteId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DepartementId");
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
 
                     b.HasIndex("ServiceId");
+
+                    b.HasIndex("UniteId");
 
                     b.ToTable("Employes");
                 });
@@ -329,7 +323,7 @@ namespace EcoTrack.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DepartementId")
+                    b.Property<int>("DivisionId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("EstActif")
@@ -342,9 +336,35 @@ namespace EcoTrack.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DepartementId");
+                    b.HasIndex("DivisionId");
 
                     b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Unite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("EstActif")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("Unites");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -396,6 +416,79 @@ namespace EcoTrack.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex");
+
+                    b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("IdentityUser");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -479,8 +572,40 @@ namespace EcoTrack.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("EcoTrack.Models.ApplicationUser", b =>
+                {
+                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
+
+                    b.Property<string>("CreeParId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DateExpirationAcces")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DoitChangerMotDePasse")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nom")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Prenom")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasDiscriminator().HasValue("ApplicationUser");
+                });
+
             modelBuilder.Entity("EcoTrack.Models.Actif", b =>
                 {
+                    b.HasOne("EcoTrack.Models.Agence", "Agence")
+                        .WithMany("ActifsPartages")
+                        .HasForeignKey("AgenceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("EcoTrack.Models.CategorieActif", "CategorieActif")
                         .WithMany("Actifs")
                         .HasForeignKey("CategorieActifId")
@@ -488,13 +613,36 @@ namespace EcoTrack.Migrations
                         .IsRequired();
 
                     b.HasOne("EcoTrack.Models.Departement", "Departement")
-                        .WithMany("Actifs")
+                        .WithMany()
                         .HasForeignKey("DepartementId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EcoTrack.Models.Division", "Division")
+                        .WithMany()
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EcoTrack.Models.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("EcoTrack.Models.Unite", "Unite")
+                        .WithMany()
+                        .HasForeignKey("UniteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Agence");
 
                     b.Navigation("CategorieActif");
 
                     b.Navigation("Departement");
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Service");
+
+                    b.Navigation("Unite");
                 });
 
             modelBuilder.Entity("EcoTrack.Models.Affectation", b =>
@@ -502,7 +650,7 @@ namespace EcoTrack.Migrations
                     b.HasOne("EcoTrack.Models.Actif", "Actif")
                         .WithMany("Affectations")
                         .HasForeignKey("ActifId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("EcoTrack.Models.Employe", "Employe")
@@ -516,23 +664,52 @@ namespace EcoTrack.Migrations
                     b.Navigation("Employe");
                 });
 
-            modelBuilder.Entity("EcoTrack.Models.Employe", b =>
+            modelBuilder.Entity("EcoTrack.Models.Departement", b =>
+                {
+                    b.HasOne("EcoTrack.Models.Agence", "Agence")
+                        .WithMany("Departements")
+                        .HasForeignKey("AgenceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Agence");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Division", b =>
                 {
                     b.HasOne("EcoTrack.Models.Departement", "Departement")
-                        .WithMany("Employes")
+                        .WithMany("Divisions")
                         .HasForeignKey("DepartementId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Departement");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Employe", b =>
+                {
+                    b.HasOne("EcoTrack.Models.ApplicationUser", "ApplicationUser")
+                        .WithOne()
+                        .HasForeignKey("EcoTrack.Models.Employe", "ApplicationUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("EcoTrack.Models.Service", "Service")
-                        .WithMany("Employes")
+                        .WithMany()
                         .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EcoTrack.Models.Unite", "Unite")
+                        .WithMany("Employes")
+                        .HasForeignKey("UniteId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Departement");
+                    b.Navigation("ApplicationUser");
 
                     b.Navigation("Service");
+
+                    b.Navigation("Unite");
                 });
 
             modelBuilder.Entity("EcoTrack.Models.JournalAction", b =>
@@ -540,7 +717,7 @@ namespace EcoTrack.Migrations
                     b.HasOne("EcoTrack.Models.ApplicationUser", "Utilisateur")
                         .WithMany()
                         .HasForeignKey("UtilisateurId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Utilisateur");
@@ -548,13 +725,24 @@ namespace EcoTrack.Migrations
 
             modelBuilder.Entity("EcoTrack.Models.Service", b =>
                 {
-                    b.HasOne("EcoTrack.Models.Departement", "Departement")
+                    b.HasOne("EcoTrack.Models.Division", "Division")
                         .WithMany("Services")
-                        .HasForeignKey("DepartementId")
+                        .HasForeignKey("DivisionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Departement");
+                    b.Navigation("Division");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Unite", b =>
+                {
+                    b.HasOne("EcoTrack.Models.Service", "Service")
+                        .WithMany("Unites")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -568,7 +756,7 @@ namespace EcoTrack.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("EcoTrack.Models.ApplicationUser", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -577,7 +765,7 @@ namespace EcoTrack.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("EcoTrack.Models.ApplicationUser", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -592,7 +780,7 @@ namespace EcoTrack.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("EcoTrack.Models.ApplicationUser", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -601,7 +789,7 @@ namespace EcoTrack.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("EcoTrack.Models.ApplicationUser", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -613,6 +801,13 @@ namespace EcoTrack.Migrations
                     b.Navigation("Affectations");
                 });
 
+            modelBuilder.Entity("EcoTrack.Models.Agence", b =>
+                {
+                    b.Navigation("ActifsPartages");
+
+                    b.Navigation("Departements");
+                });
+
             modelBuilder.Entity("EcoTrack.Models.CategorieActif", b =>
                 {
                     b.Navigation("Actifs");
@@ -620,10 +815,11 @@ namespace EcoTrack.Migrations
 
             modelBuilder.Entity("EcoTrack.Models.Departement", b =>
                 {
-                    b.Navigation("Actifs");
+                    b.Navigation("Divisions");
+                });
 
-                    b.Navigation("Employes");
-
+            modelBuilder.Entity("EcoTrack.Models.Division", b =>
+                {
                     b.Navigation("Services");
                 });
 
@@ -633,6 +829,11 @@ namespace EcoTrack.Migrations
                 });
 
             modelBuilder.Entity("EcoTrack.Models.Service", b =>
+                {
+                    b.Navigation("Unites");
+                });
+
+            modelBuilder.Entity("EcoTrack.Models.Unite", b =>
                 {
                     b.Navigation("Employes");
                 });

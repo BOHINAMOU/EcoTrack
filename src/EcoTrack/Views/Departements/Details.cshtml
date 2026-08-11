@@ -1,160 +1,26 @@
-﻿@model EcoTrack.ViewModels.DepartementDetailsViewModel
+﻿@model EcoTrack.Models.Departement
 @{
     ViewData["Title"] = "Détails du département";
-    var departement = Model.Departement;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h3 class="mb-0">@departement.Nom</h3>
-        <p class="text-muted mb-0">
-            Code : @(departement.Code ?? "—") | Localisation : @(departement.Localisation ?? "—")
-            @if (!departement.EstActif)
-            {
-                <span class="badge bg-secondary ms-2">Désactivé</span>
-            }
-        </p>
-    </div>
+    <h3 class="mb-0">@Model.Nom</h3>
     <a asp-action="Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Retour à la liste
+        <i class="bi bi-arrow-left"></i> Retour
     </a>
 </div>
+<p class="text-muted">Agence : @Model.Agence?.Nom</p>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Employés</div>
-            <div class="stat-value">@departement.Employes.Count</div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="stat-card">
-            <div class="stat-label">Actifs détenus par ce département</div>
-            <div class="stat-value">@Model.RepartitionParCategorie.Sum(r => r.Nombre)</div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-5">
-        <div class="stat-card">
-            <h6 class="mb-3">Répartition des actifs par catégorie</h6>
-            @if (Model.RepartitionParCategorie.Any())
-            {
-                <canvas id="graphiqueCategories" style="max-height: 260px;"></canvas>
-                <ul class="list-unstyled mt-3 mb-0">
-                    @foreach (var r in Model.RepartitionParCategorie)
-                    {
-                        <li class="d-flex align-items-center mb-1" style="font-size: 0.85rem;">
-                            <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:@r.CouleurHex; margin-right:8px;"></span>
-                            @r.NomCategorie — @r.Nombre (@r.Pourcentage %)
-                        </li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <p class="text-muted mb-0">Aucun actif détenu par ce département pour l'instant.</p>
-            }
-        </div>
-    </div>
-
-    <div class="col-md-7">
-        <div class="stat-card">
-            <h6 class="mb-3">Dernières affectations dans l'agence</h6>
-            @if (Model.DernieresAffectations.Any())
-            {
-                <ul class="list-group">
-                    @foreach (var affectation in Model.DernieresAffectations)
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>
-                                <strong>@affectation.Actif?.Nom</strong> → @affectation.Employe?.Prenom @affectation.Employe?.Nom
-                                @if (affectation.DateRetrait is not null)
-                                {
-                                    <span class="badge bg-secondary ms-1">Terminée</span>
-                                }
-                            </span>
-                            <span class="text-muted small">@affectation.DateAffectation.ToString("dd/MM/yyyy")</span>
-                        </li>
-                    }
-                </ul>
-            }
-            else
-            {
-                <p class="text-muted mb-0">Aucune affectation enregistrée pour cette agence.</p>
-            }
-        </div>
-    </div>
-</div>
-
-<h5 class="mb-3">Employés et leurs actifs</h5>
-<div class="table-responsive-wrapper">
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>Employé</th>
-                <th>Poste</th>
-                <th>Actifs attribués</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var employe in departement.Employes.OrderBy(e => e.Nom))
-            {
-                <tr>
-                    <td>
-                        <a asp-controller="Employes" asp-action="Details" asp-route-id="@employe.Id">
-                            @employe.Prenom @employe.Nom
-                        </a>
-                        @if (!employe.EstActif)
-                        {
-                            <span class="badge bg-secondary ms-1">Inactif</span>
-                        }
-                    </td>
-                    <td>@(employe.Poste ?? "—")</td>
-                    <td>
-                        @if (employe.Affectations.Any())
-                        {
-                            @foreach (var affectation in employe.Affectations)
-                            {
-                                <span class="badge bg-light text-dark border me-1">@affectation.Actif?.Nom</span>
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted">Aucun actif</span>
-                        }
-                    </td>
-                </tr>
-            }
-            @if (!departement.Employes.Any())
-            {
-                <tr>
-                    <td colspan="3" class="text-muted">Aucun employé dans cette agence.</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-    <script>
-        const ctx = document.getElementById('graphiqueCategories');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => $"'{r.NomCategorie}'")))],
-                    datasets: [{
-                        data: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => r.Nombre)))],
-                        backgroundColor: [@Html.Raw(string.Join(",", Model.RepartitionParCategorie.Select(r => $"'{r.CouleurHex}'")))]
-                    }]
-                },
-                options: {
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-    </script>
-}
+<h5 class="mb-3">Divisions (@Model.Divisions.Count)</h5>
+<ul class="list-group">
+    @foreach (var division in Model.Divisions)
+    {
+        <li class="list-group-item">
+            <a asp-controller="Divisions" asp-action="Details" asp-route-id="@division.Id">@division.Nom</a>
+        </li>
+    }
+    @if (!Model.Divisions.Any())
+    {
+        <li class="list-group-item text-muted">Aucune division dans ce département.</li>
+    }
+</ul>

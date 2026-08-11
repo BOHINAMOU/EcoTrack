@@ -20,5 +20,9 @@ namespace EcoTrack.ViewModels
         [Required(ErrorMessage = "L'email est obligatoire.")]
         [EmailAddress(ErrorMessage = "Le format de l'email n'est pas valide.")]
         public string Email { get; set; } = string.Empty;
+
+        [Display(Name = "Accès jusqu'au (laisser vide = pas d'expiration automatique)")]
+        [DataType(DataType.Date)]
+        public DateTime? DateExpiration { get; set; }
     }
 }

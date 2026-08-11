@@ -8,7 +8,7 @@
     <div>
         <h3 class="mb-0">@employe.Prenom @employe.Nom</h3>
         <p class="text-muted mb-0">
-            @(employe.Poste ?? "Poste non renseigné") — @employe.Departement?.Nom / @employe.Service?.Nom
+            @(employe.Poste ?? "Poste non renseigné") — @employe.Agence?.Nom / @employe.Unite?.Nom
             @if (!employe.EstActif)
             {
                 <span class="badge bg-secondary ms-2">Inactif</span>

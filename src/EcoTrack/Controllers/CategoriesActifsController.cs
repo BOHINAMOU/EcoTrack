@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public class CategoriesActifsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -32,7 +32,6 @@ namespace EcoTrack.Controllers
         {
             var categorie = await _context.CategoriesActifs
                 .Include(c => c.Actifs)
-                    .ThenInclude(a => a.Departement)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (categorie is null)
@@ -44,7 +43,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /CategoriesActifs/Create
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         public IActionResult Create()
         {
             return View();
@@ -52,7 +51,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/Create
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategorieActif categorie)
         {
@@ -84,7 +83,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /CategoriesActifs/Edit/5
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         public async Task<IActionResult> Edit(int id)
         {
             var categorie = await _context.CategoriesActifs.FindAsync(id);
@@ -99,7 +98,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/Edit/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, CategorieActif categorie)
         {
@@ -136,7 +135,7 @@ namespace EcoTrack.Controllers
 
         // POST /CategoriesActifs/BasculerActivation/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {

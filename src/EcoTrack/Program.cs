@@ -55,7 +55,10 @@ builder.Services.AddScoped<IJournalService, JournalService>();
 
 
 // --- MVC ---
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<EcoTrack.Infrastructure.ExpirationAccesFilter>();
+});
 
 
 

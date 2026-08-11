@@ -18,7 +18,6 @@ namespace EcoTrack.Models
         public DateTime DateAffectation { get; set; } = DateTime.UtcNow;
         [Display(Name = "Date de retrait")]
         public DateTime? DateRetrait { get; set; }
-
         [StringLength(250)]
         public string? Motif { get; set; }
     }

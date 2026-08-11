@@ -1,0 +1,80 @@
+﻿@model List<(EcoTrack.Models.Employe Employe, EcoTrack.Models.ApplicationUser Compte)>
+@{
+    ViewData["Title"] = "Tous les utilisateurs";
+    var terme = (string?)ViewBag.Terme;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h3 class="mb-0">Tous les utilisateurs</h3>
+        <p class="text-muted mb-0">@Model.Count compte(s) employé — modifier le profil, réinitialiser le mot de passe, activer/désactiver.</p>
+    </div>
+</div>
+
+<form method="get" class="mb-3 d-flex" style="max-width: 420px; gap: 0.5rem;">
+    <input type="text" name="terme" value="@terme" class="form-control" placeholder="Rechercher un employé (nom ou email)" />
+    <button type="submit" class="btn btn-outline-secondary">Rechercher</button>
+</form>
+
+<div class="table-responsive-wrapper">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Nom d'utilisateur</th>
+                <th>Email</th>
+                <th>Statut</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (employe, compte) in Model)
+            {
+                <tr>
+                    <td>@employe.Prenom @employe.Nom</td>
+                    <td>@compte.UserName</td>
+                    <td>@compte.Email</td>
+                    <td>
+                        @if (compte.LockoutEnd is not null && compte.LockoutEnd > DateTimeOffset.UtcNow)
+                        {
+                            <span class="badge bg-secondary">Désactivé</span>
+                        }
+                        else if (compte.DoitChangerMotDePasse)
+                        {
+                            <span class="badge bg-warning text-dark">Doit changer mdp</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Actif</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a asp-action="ModifierEmploye" asp-route-id="@employe.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                        <form asp-action="ReinitialiserMotDePasse" asp-route-id="@compte.Id" asp-route-retour="TousLesUtilisateurs" method="post" class="d-inline"
+                              onsubmit="return confirm('Générer un nouveau mot de passe pour cette personne ? Il lui sera envoyé par email.');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Réinitialiser mdp</button>
+                        </form>
+                        <form asp-action="BasculerActivation" asp-route-id="@compte.Id" asp-route-retour="TousLesUtilisateurs" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            @if (compte.LockoutEnd is not null && compte.LockoutEnd > DateTimeOffset.UtcNow)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-muted">Aucun utilisateur trouvé.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

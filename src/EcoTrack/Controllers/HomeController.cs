@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -32,7 +32,11 @@ namespace EcoTrack.Controllers
                 NombreEmployes = await _context.Employes.CountAsync(e => e.EstActif),
                 NombreActifsDisponibles = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Disponible),
                 NombreActifsAttribues = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Attribue),
-                NombreActifsDeteriores = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Deteriore)
+                NombreActifsDeteriores = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.Deteriore),
+                NombreActifsEnPanne = await _context.Actifs.CountAsync(a => a.Etat == EtatActif.EnPanne),
+                NombreAgences = await _context.Agences.CountAsync(a => a.EstActif),
+                NombreDepartements = await _context.Departements.CountAsync(d => d.EstActif),
+                NombreServices = await _context.Services.CountAsync(s => s.EstActif)
             };
 
             return View(viewModel);
@@ -50,7 +54,6 @@ namespace EcoTrack.Controllers
             var termeNormalise = terme.Trim().ToLower();
 
             var employes = await _context.Employes
-                .Include(e => e.Departement)
                 .Where(e => (e.Nom + " " + e.Prenom).ToLower().Contains(termeNormalise)
                          || (e.Prenom + " " + e.Nom).ToLower().Contains(termeNormalise))
                 .Take(8)
@@ -58,7 +61,9 @@ namespace EcoTrack.Controllers
                 {
                     id = e.Id,
                     nomComplet = e.Prenom + " " + e.Nom,
-                    departement = e.Departement != null ? e.Departement.Nom : "—"
+                    departement = e.Unite != null && e.Unite.Service != null && e.Unite.Service.Division != null && e.Unite.Service.Division.Departement != null
+                        ? e.Unite.Service.Division.Departement.Nom
+                        : "—"
                 })
                 .ToListAsync();
 

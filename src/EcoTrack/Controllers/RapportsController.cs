@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public partial class RapportsController : Controller
     {
         private readonly ApplicationDbContext _context;

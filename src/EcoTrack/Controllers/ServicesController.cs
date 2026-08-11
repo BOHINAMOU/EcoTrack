@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EcoTrack.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
     public class ServicesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,39 +20,55 @@ namespace EcoTrack.Controllers
         public async Task<IActionResult> Index()
         {
             var services = await _context.Services
-                .Include(s => s.Departement)
-                .Include(s => s.Employes)
-                .OrderBy(s => s.Departement!.Nom).ThenBy(s => s.Nom)
+                .Include(s => s.Division)
+                .Include(s => s.Unites)
+                .OrderBy(s => s.Division!.Nom).ThenBy(s => s.Nom)
                 .ToListAsync();
 
             return View(services);
         }
 
+        // GET /Services/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var service = await _context.Services
+                .Include(s => s.Division)
+                .Include(s => s.Unites)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (service is null)
+            {
+                return NotFound();
+            }
+
+            return View(service);
+        }
+
         // GET /Services/Create
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         public async Task<IActionResult> Create()
         {
-            ViewBag.Agences = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+            ViewBag.Divisions = await _context.Divisions.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
             return View();
         }
 
         // POST /Services/Create
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Service service)
         {
             var existeDeja = await _context.Services
-                .AnyAsync(s => s.DepartementId == service.DepartementId && s.Nom.ToLower() == service.Nom.ToLower());
+                .AnyAsync(s => s.DivisionId == service.DivisionId && s.Nom.ToLower() == service.Nom.ToLower());
 
             if (existeDeja)
             {
-                ModelState.AddModelError(nameof(Service.Nom), "Un service avec ce nom existe déjà dans cette agence.");
+                ModelState.AddModelError(nameof(Service.Nom), "Un service avec ce nom existe déjà dans cette division.");
             }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Agences = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+                ViewBag.Divisions = await _context.Divisions.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
                 return View(service);
             }
 
@@ -64,7 +80,7 @@ namespace EcoTrack.Controllers
         }
 
         // GET /Services/Edit/5
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         public async Task<IActionResult> Edit(int id)
         {
             var service = await _context.Services.FindAsync(id);
@@ -73,13 +89,13 @@ namespace EcoTrack.Controllers
                 return NotFound();
             }
 
-            ViewBag.Agences = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+            ViewBag.Divisions = await _context.Divisions.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
             return View(service);
         }
 
         // POST /Services/Edit/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Service service)
         {
@@ -89,16 +105,16 @@ namespace EcoTrack.Controllers
             }
 
             var existeDeja = await _context.Services
-                .AnyAsync(s => s.Id != service.Id && s.DepartementId == service.DepartementId && s.Nom.ToLower() == service.Nom.ToLower());
+                .AnyAsync(s => s.Id != service.Id && s.DivisionId == service.DivisionId && s.Nom.ToLower() == service.Nom.ToLower());
 
             if (existeDeja)
             {
-                ModelState.AddModelError(nameof(Service.Nom), "Un service avec ce nom existe déjà dans cette agence.");
+                ModelState.AddModelError(nameof(Service.Nom), "Un service avec ce nom existe déjà dans cette division.");
             }
 
             if (!ModelState.IsValid)
             {
-                ViewBag.Agences = await _context.Departements.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
+                ViewBag.Divisions = await _context.Divisions.Where(d => d.EstActif).OrderBy(d => d.Nom).ToListAsync();
                 return View(service);
             }
 
@@ -111,7 +127,7 @@ namespace EcoTrack.Controllers
 
         // POST /Services/BasculerActivation/5
         [HttpPost]
-        [Authorize(Roles = "AdminPrincipal")]
+        [Authorize(Roles = "AdminPrincipal,AdminTemporaire")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BasculerActivation(int id)
         {

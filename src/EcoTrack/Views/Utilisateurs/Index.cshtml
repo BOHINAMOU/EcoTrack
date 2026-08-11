@@ -1,4 +1,4 @@
-﻿@model List<(EcoTrack.Models.ApplicationUser Utilisateur, string Role)>
+﻿@model List<(EcoTrack.Models.ApplicationUser Utilisateur, bool EstLieAUnEmploye)>
 @{
     ViewData["Title"] = "Gestion des utilisateurs";
 }
@@ -6,11 +6,16 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h3 class="mb-0">Gestion des utilisateurs</h3>
-        <p class="text-muted mb-0">@Model.Count utilisateur(s)</p>
+        <p class="text-muted mb-0">@Model.Count compte(s) — employés promus admin et comptes temporaires</p>
     </div>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-person-plus"></i> Nouvel admin secondaire
-    </a>
+    <div>
+        <a asp-action="Nommer" class="btn btn-outline-primary">
+            <i class="bi bi-person-check"></i> Nommer un employé admin
+        </a>
+        <a asp-action="CreerTemporaire" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Nouveau compte temporaire
+        </a>
+    </div>
 </div>
 
 <div class="table-responsive-wrapper">
@@ -18,30 +23,37 @@
         <thead>
             <tr>
                 <th>Nom complet</th>
-                <th>Nom d'utilisateur</th>
                 <th>Email</th>
-                <th>Rôle</th>
+                <th>Type</th>
+                <th>Accès jusqu'au</th>
                 <th>Statut</th>
                 <th class="text-end">Actions</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var (utilisateur, role) in Model)
+            @foreach (var (utilisateur, estLieAUnEmploye) in Model)
             {
-                var estAdminPrincipal = role == "AdminPrincipal";
-
                 <tr>
                     <td>@utilisateur.Prenom @utilisateur.Nom</td>
-                    <td>@utilisateur.UserName</td>
                     <td>@utilisateur.Email</td>
                     <td>
-                        @if (estAdminPrincipal)
+                        @if (estLieAUnEmploye)
                         {
-                            <span class="badge" style="background-color: var(--ecotrack-bleu);">Admin principal</span>
+                            <span class="badge bg-warning text-dark">Employé promu admin</span>
                         }
                         else
                         {
-                            <span class="badge bg-secondary">Admin secondaire</span>
+                            <span class="badge bg-info text-dark">Compte temporaire</span>
+                        }
+                    </td>
+                    <td>
+                        @if (utilisateur.DateExpirationAcces is not null)
+                        {
+                            @utilisateur.DateExpirationAcces.Value.ToString("dd/MM/yyyy")
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
                         }
                     </td>
                     <td>
@@ -55,28 +67,48 @@
                         }
                     </td>
                     <td class="text-end">
-                        @if (!estAdminPrincipal)
+                        <a asp-action="ModifierProfil" asp-route-id="@utilisateur.Id" class="btn btn-sm btn-outline-primary">Modifier le profil</a>
+                        <a asp-action="Actions" asp-route-utilisateurId="@utilisateur.Id" class="btn btn-sm btn-outline-secondary">Historique</a>
+                        <form asp-action="ReinitialiserMotDePasse" asp-route-id="@utilisateur.Id" method="post" class="d-inline"
+                              onsubmit="return confirm('Générer un nouveau mot de passe pour cet utilisateur ?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-outline-warning">Réinitialiser mdp</button>
+                        </form>
+                        <form asp-action="BasculerActivation" asp-route-id="@utilisateur.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            @if (utilisateur.LockoutEnd is not null && utilisateur.LockoutEnd > DateTimeOffset.UtcNow)
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
+                            }
+                        </form>
+
+                        @if (estLieAUnEmploye)
                         {
-                            <a asp-action="Actions" asp-route-utilisateurId="@utilisateur.Id" class="btn btn-sm btn-outline-secondary">Historique</a>
-                            <a asp-action="Edit" asp-route-id="@utilisateur.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
-                            <form asp-action="ReinitialiserMotDePasse" asp-route-id="@utilisateur.Id" method="post" class="d-inline"
-                                  onsubmit="return confirm('Générer un nouveau mot de passe pour cet utilisateur ?');">
+                            <form asp-action="Revoquer" asp-route-id="@utilisateur.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Retirer les droits admin temporaire de cette personne ?');">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm btn-outline-warning">Réinitialiser mdp</button>
+                                <button type="submit" class="btn btn-sm btn-outline-dark">Retirer les droits admin</button>
                             </form>
-                            <form asp-action="BasculerActivation" asp-route-id="@utilisateur.Id" method="post" class="d-inline">
+                        }
+                        else
+                        {
+                            <form asp-action="Supprimer" asp-route-id="@utilisateur.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Supprimer définitivement ce compte ? Cette action est irréversible.');">
                                 @Html.AntiForgeryToken()
-                                @if (utilisateur.LockoutEnd is not null && utilisateur.LockoutEnd > DateTimeOffset.UtcNow)
-                                {
-                                    <button type="submit" class="btn btn-sm btn-outline-success">Réactiver</button>
-                                }
-                                else
-                                {
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Désactiver</button>
-                                }
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
                             </form>
                         }
                     </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="text-muted">Aucun administrateur temporaire actuellement.</td>
                 </tr>
             }
         </tbody>

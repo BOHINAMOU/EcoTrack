@@ -1,44 +1,68 @@
 ﻿@{
-    ViewData["Title"] = "Rapport par agence ou service";
-    var agences = ViewBag.Agences as IEnumerable<EcoTrack.Models.Departement>;
+    ViewData["Title"] = "Rapport par unité";
+    var agences = ViewBag.Agences as IEnumerable<EcoTrack.Models.Agence>;
+    var departements = ViewBag.Departements as IEnumerable<EcoTrack.Models.Departement>;
+    var divisions = ViewBag.Divisions as IEnumerable<EcoTrack.Models.Division>;
+    var services = ViewBag.Services as IEnumerable<EcoTrack.Models.Service>;
+    var unites = ViewBag.Unites as IEnumerable<EcoTrack.Models.Unite>;
 }
 
-<h3>Rapport par agence ou service</h3>
-<p class="text-muted">Choisissez une agence entière, ou un service précis à l'intérieur d'une agence.</p>
+<h3>Rapport par agence, département, division, service ou unité</h3>
+<p class="text-muted">Le rapport inclut les employés de l'unité choisie (et de ses sous-unités), leurs actifs attribués, et les actifs partagés rattachés directement à cette unité.</p>
 
 <div class="card p-4" style="max-width: 500px;">
     <form asp-action="Departement" method="post">
         @Html.AntiForgeryToken()
 
         <div class="mb-3">
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="mode" id="modeAgence" value="agence" checked />
-                <label class="form-check-label" for="modeAgence">Toute l'agence</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="mode" id="modeService" value="service" />
-                <label class="form-check-label" for="modeService">Un service précis</label>
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Rechercher une agence</label>
-            <input type="text" id="filtreAgence" class="form-control mb-2" placeholder="Tapez pour filtrer..." autocomplete="off" />
-            <select name="departementId" id="selectAgence" class="form-select" required size="5">
-                @if (agences is not null)
-                {
-                    foreach (var agence in agences)
+            <label class="form-label">Choisir une unité</label>
+            <select name="cible" class="form-select" required>
+                <option value="">-- Choisir --</option>
+                <optgroup label="Agence">
+                    @if (agences is not null)
                     {
-                        <option value="@agence.Id">@agence.Nom</option>
+                        foreach (var a in agences)
+                        {
+                            <option value="AG:@a.Id">@a.Nom</option>
+                        }
                     }
-                }
-            </select>
-        </div>
-
-        <div class="mb-3" id="blocService" style="display:none;">
-            <label class="form-label">Service</label>
-            <select name="serviceId" id="selectService" class="form-select" disabled>
-                <option value="">-- Choisissez d'abord une agence --</option>
+                </optgroup>
+                <optgroup label="Département">
+                    @if (departements is not null)
+                    {
+                        foreach (var d in departements)
+                        {
+                            <option value="DP:@d.Id">@d.Nom</option>
+                        }
+                    }
+                </optgroup>
+                <optgroup label="Division">
+                    @if (divisions is not null)
+                    {
+                        foreach (var d in divisions)
+                        {
+                            <option value="DV:@d.Id">@d.Nom</option>
+                        }
+                    }
+                </optgroup>
+                <optgroup label="Service">
+                    @if (services is not null)
+                    {
+                        foreach (var s in services)
+                        {
+                            <option value="SV:@s.Id">@s.Nom</option>
+                        }
+                    }
+                </optgroup>
+                <optgroup label="Unité">
+                    @if (unites is not null)
+                    {
+                        foreach (var u in unites)
+                        {
+                            <option value="UN:@u.Id">@u.Nom</option>
+                        }
+                    }
+                </optgroup>
             </select>
         </div>
 
@@ -48,49 +72,3 @@
         <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
     </form>
 </div>
-
-@section Scripts {
-<script>
-    var tousLesServices = @Html.Raw(Json.Serialize(ViewBag.Services));
-    var modeAgence = document.getElementById('modeAgence');
-    var modeService = document.getElementById('modeService');
-    var filtreAgence = document.getElementById('filtreAgence');
-    var selectAgence = document.getElementById('selectAgence');
-    var blocService = document.getElementById('blocService');
-    var selectService = document.getElementById('selectService');
-
-    filtreAgence.addEventListener('input', function () {
-        var terme = filtreAgence.value.trim().toLowerCase();
-        Array.from(selectAgence.options).forEach(function (option) {
-            var correspond = option.textContent.toLowerCase().indexOf(terme) !== -1;
-            option.style.display = correspond ? '' : 'none';
-        });
-    });
-
-    function basculerMode() {
-        var estService = modeService.checked;
-        blocService.style.display = estService ? '' : 'none';
-        selectService.disabled = !estService;
-        if (!estService) { selectService.value = ''; }
-    }
-
-    function rafraichirServices() {
-        var agenceId = selectAgence.value;
-        selectService.innerHTML = '<option value="">-- Choisir --</option>';
-        (tousLesServices || [])
-            .filter(function (s) { return s.departementId == agenceId; })
-            .forEach(function (s) {
-                var option = document.createElement('option');
-                option.value = s.id;
-                option.textContent = s.nom;
-                selectService.appendChild(option);
-            });
-    }
-
-    modeAgence.addEventListener('change', basculerMode);
-    modeService.addEventListener('change', basculerMode);
-    selectAgence.addEventListener('change', rafraichirServices);
-
-    basculerMode();
-</script>
-}

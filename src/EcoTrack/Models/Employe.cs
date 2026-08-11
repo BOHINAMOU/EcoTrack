@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EcoTrack.Models
 {
     public class Employe
     {
         public int Id { get; set; }
-        [Required(ErrorMessage = "Le service est obligatoire.")]
-        [Display(Name = "Service")]
         public int ServiceId { get; set; }
         public Service? Service { get; set; }
 
@@ -33,10 +32,26 @@ namespace EcoTrack.Models
         [Display(Name = "Employé actif")]
         public bool EstActif { get; set; } = true;
 
-        [Required]
-        [Display(Name = "Agence")]
-        public int DepartementId { get; set; }
-        public Departement? Departement { get; set; }
+        [Required(ErrorMessage = "L'unité est obligatoire.")]
+        [Display(Name = "Unité")]
+        public int UniteId { get; set; }
+        public Unite? Unite { get; set; }
+
+        /// <summary>Compte de connexion de l'employé (créé automatiquement à la création de l'employé).</summary>
+        public string? ApplicationUserId { get; set; }
+        public ApplicationUser? ApplicationUser { get; set; }
+
+        [NotMapped]
+        public Agence? Agence => Unite?.Service?.Division?.Departement?.Agence;
+
+        [NotMapped]
+        public Departement? DepartementOrg => Unite?.Service?.Division?.Departement;
+
+        [NotMapped]
+        public Division? DivisionOrg => Unite?.Service?.Division;
+
+        [NotMapped]
+        public Service? ServiceOrg => Unite?.Service;
 
         public ICollection<Affectation> Affectations { get; set; } = new List<Affectation>();
     }

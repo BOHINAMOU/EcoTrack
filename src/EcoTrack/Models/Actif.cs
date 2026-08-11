@@ -34,9 +34,29 @@ namespace EcoTrack.Models
         public int CategorieActifId { get; set; }
         public CategorieActif? CategorieActif { get; set; }
 
-        [Display(Name = "Agence")]
+        [Display(Name = "Agence (si actif partagé)")]
+        public int? AgenceId { get; set; }
+        public Agence? Agence { get; set; }
+
+        [Display(Name = "Département (si actif partagé)")]
         public int? DepartementId { get; set; }
         public Departement? Departement { get; set; }
+
+        [Display(Name = "Division (si actif partagé)")]
+        public int? DivisionId { get; set; }
+        public Division? Division { get; set; }
+
+        [Display(Name = "Service (si actif partagé)")]
+        public int? ServiceId { get; set; }
+        public Service? Service { get; set; }
+
+        [Display(Name = "Unité (si actif partagé)")]
+        public int? UniteId { get; set; }
+        public Unite? Unite { get; set; }
+
+        /// <summary>Vrai si l'actif appartient à une unité organisationnelle plutôt qu'à un employé précis.</summary>
+        [NotMapped]
+        public bool EstPartageAUneUnite => AgenceId is not null || DepartementId is not null || DivisionId is not null || ServiceId is not null || UniteId is not null;
 
         public ICollection<Affectation> Affectations { get; set; } = new List<Affectation>();
     }
