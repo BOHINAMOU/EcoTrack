@@ -6,16 +6,13 @@
     var actifsAgence = (List<Actif>)ViewBag.ActifsAgence;
     var initiales = $"{employe.Prenom.FirstOrDefault()}{employe.Nom.FirstOrDefault()}".ToString().ToUpper();
 }
-<a href="c:\bohinamou doc\rapport de stage\ecotrack\src\ecotrack\views\monespace\index.cshtml">c:\bohinamou doc\rapport de stage\ecotrack\src\ecotrack\views\monespace\index.cshtml</a>
 
 <style>
- 
-
     .mon-espace-hero-banner {
         position: relative;
         padding: 35px;
-		min-height: 240px;
-		background-image: url('/images/logo_ecobank.avif');
+        min-height: 240px;
+        background-image: url('/images/logo_ecobank.avif');
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -24,9 +21,6 @@
         width: calc(100% + 4rem);
         border-radius: 0;
     }
-
-
-
 
         .mon-espace-hero-banner::before {
             content: "";
@@ -41,6 +35,8 @@
             z-index: 1;
         }
 
+        /* Barre de recherche en verre dépoli, cohérente avec le fond assombri
+               (avant : fond blanc quasi opaque qui masquait le bandeau derrière) */
         .mon-espace-hero-banner .search-container-glass {
             background: rgba(255, 255, 255, 0.12);
             backdrop-filter: blur(8px);
@@ -50,12 +46,19 @@
         }
 
         .mon-espace-hero-banner .form-control {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.12);
             border: none;
             border-radius: 8px;
+            color: #fff;
         }
 
+            .mon-espace-hero-banner .form-control::placeholder {
+                color: rgba(255, 255, 255, 0.65);
+            }
+
             .mon-espace-hero-banner .form-control:focus {
+                background: rgba(255, 255, 255, 0.18);
+                color: #fff;
                 box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
             }
 </style>
@@ -99,6 +102,23 @@
     </div>
 </div>
 
+<div class="card p-3 mb-4" style="max-width: 500px;">
+    <h6 class="fw-bold mb-2"><i class="bi bi-file-earmark-pdf me-1"></i> Rapport PDF sur une période</h6>
+    <form asp-action="RapportPdfPlage" method="get" class="row g-2 align-items-end">
+        <div class="col">
+            <label class="form-label small mb-1">Du</label>
+            <input type="date" name="dateDebut" class="form-control form-control-sm" required />
+        </div>
+        <div class="col">
+            <label class="form-label small mb-1">Au</label>
+            <input type="date" name="dateFin" class="form-control form-control-sm" required />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Générer</button>
+        </div>
+    </form>
+</div>
+
 <h5 class="mb-2">Mes actifs</h5>
 <div class="table-responsive-wrapper mb-4">
     <table class="table table-hover" id="tableMesActifs">
@@ -108,6 +128,7 @@
                 <th>Numéro de série</th>
                 <th>Marque / Modèle</th>
                 <th>État</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -118,12 +139,15 @@
                     <td>@actif.NumeroSerie</td>
                     <td>@actif.Marque @actif.Modele</td>
                     <td>@actif.Etat</td>
+                    <td class="text-end">
+                        <a asp-action="DetailsActif" asp-route-id="@actif.Id" class="btn btn-sm btn-outline-primary">Détails</a>
+                    </td>
                 </tr>
             }
             @if (!mesActifs.Any())
             {
                 <tr>
-                    <td colspan="4" class="text-muted">Aucun actif ne vous est attribué pour l'instant.</td>
+                    <td colspan="5" class="text-muted">Aucun actif ne vous est attribué pour l'instant.</td>
                 </tr>
             }
         </tbody>
@@ -143,6 +167,7 @@
                 <th>Numéro de série</th>
                 <th>Marque / Modèle</th>
                 <th>État</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -153,12 +178,15 @@
                     <td>@actif.NumeroSerie</td>
                     <td>@actif.Marque @actif.Modele</td>
                     <td>@actif.Etat</td>
+                    <td class="text-end">
+                        <a asp-action="DetailsActif" asp-route-id="@actif.Id" class="btn btn-sm btn-outline-primary">Détails</a>
+                    </td>
                 </tr>
             }
             @if (!actifsAgence.Any())
             {
                 <tr>
-                    <td colspan="4" class="text-muted">Aucun autre actif visible dans votre agence.</td>
+                    <td colspan="5" class="text-muted">Aucun autre actif visible dans votre agence.</td>
                 </tr>
             }
         </tbody>

@@ -32,7 +32,11 @@
                 .sidebar-nav .nav-link, .sidebar-nav .nav-group-toggle {
                     margin-bottom: 4px;
                 }
-           
+
+            /* Correctif : site.css contient deux jeux de règles contradictoires pour la
+                           barre latérale et les sous-menus. On force ici le comportement correct :
+                           la barre défile si son contenu dépasse, et un sous-menu ouvert affiche
+                           TOUS ses éléments sans jamais les couper. */
             .ecotrack-sidebar {
                 overflow-y: auto !important;
                 max-height: 100vh !important;
@@ -177,10 +181,9 @@
                                 <i class="bi bi-chevron-down small"></i>
                             </div>
                             <div class="nav-submenu" id="sousMenuUtilisateurs">
-                                <a asp-controller="Utilisateurs" asp-action="TousLesUtilisateurs">Tous les employés (modifier infos)</a>
+                                <a asp-controller="Utilisateurs" asp-action="TousLesUtilisateurs"> Modification des informations de connexion </a>
                                 <a asp-controller="Utilisateurs" asp-action="Index">Gestion des utilisateurs</a>
-                                <a asp-controller="Utilisateurs" asp-action="Nommer">Nommer un employé admin</a>
-                                <a asp-controller="Utilisateurs" asp-action="CreerTemporaire">Nouveau compte temporaire</a>
+                              
                                 <a asp-controller="Utilisateurs" asp-action="Actions">Actions des utilisateurs</a>
                             </div>
                         }

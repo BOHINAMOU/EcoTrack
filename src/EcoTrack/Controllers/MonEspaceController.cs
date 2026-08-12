@@ -125,5 +125,119 @@ namespace EcoTrack.Controllers
 
             return File(pdf, "application/pdf", $"Mes_Actifs_{employe.Nom}.pdf");
         }
+
+        // GET /MonEspace/RapportPdfPlage?dateDebut=...&dateFin=...
+        public async Task<IActionResult> RapportPdfPlage(DateTime dateDebut, DateTime dateFin)
+        {
+            if (dateFin < dateDebut)
+            {
+                (dateDebut, dateFin) = (dateFin, dateDebut);
+            }
+
+            var debutUtc = DateTime.SpecifyKind(dateDebut.Date, DateTimeKind.Utc);
+            var finUtc = DateTime.SpecifyKind(dateFin.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+
+            var utilisateurId = _userManager.GetUserId(User);
+
+            var employe = await _context.Employes
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement!)
+                .Include(e => e.Service)
+                .FirstOrDefaultAsync(e => e.ApplicationUserId == utilisateurId);
+
+            if (employe is null)
+            {
+                return RedirectToAction("AccesRefuse", "Compte");
+            }
+
+            // Affectations qui chevauchent la plage choisie : commencées avant la fin de la plage,
+            // et soit toujours actives, soit retirées après le début de la plage.
+            var affectations = await _context.Affectations
+                .Include(a => a.Actif)
+                    .ThenInclude(a => a!.CategorieActif)
+                .Where(a => a.EmployeId == employe.Id
+                    && a.DateAffectation <= finUtc
+                    && (a.DateRetrait == null || a.DateRetrait >= debutUtc))
+                .OrderByDescending(a => a.DateAffectation)
+                .ToListAsync();
+
+            var actifIds = affectations.Select(a => a.ActifId).Distinct().ToList();
+            var detenteursActuels = await _context.Affectations
+                .Include(a => a.Employe)
+                .Where(a => actifIds.Contains(a.ActifId) && a.DateRetrait == null)
+                .ToDictionaryAsync(a => a.ActifId, a => a.Employe);
+
+            var document = new RapportEmployeDocument(new List<Employe> { employe }, affectations, detenteursActuels);
+            var pdf = document.GeneratePdf();
+
+            return File(pdf, "application/pdf", $"Mes_Actifs_{employe.Nom}_{dateDebut:yyyyMMdd}_{dateFin:yyyyMMdd}.pdf");
+        }
+
+        // GET /MonEspace/DetailsActif/5
+        // Consultation en lecture seule d'un actif, limitée aux actifs visibles par l'employé
+        // (les siens, ou ceux partagés dans son agence/unité) — pas d'accès libre à n'importe quel actif.
+        public async Task<IActionResult> DetailsActif(int id)
+        {
+            var utilisateurId = _userManager.GetUserId(User);
+
+            var employe = await _context.Employes
+                .Include(e => e.Unite!)
+                    .ThenInclude(u => u.Service!)
+                        .ThenInclude(s => s.Division!)
+                            .ThenInclude(d => d.Departement!)
+                                .ThenInclude(dep => dep.Agence)
+                .FirstOrDefaultAsync(e => e.ApplicationUserId == utilisateurId);
+
+            if (employe is null)
+            {
+                return RedirectToAction("AccesRefuse", "Compte");
+            }
+
+            var actif = await _context.Actifs
+                .Include(a => a.CategorieActif)
+                .Include(a => a.Agence)
+                .Include(a => a.Departement)
+                .Include(a => a.Division)
+                .Include(a => a.Service)
+                .Include(a => a.Unite)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (actif is null)
+            {
+                return NotFound();
+            }
+
+            var agenceId = employe.Agence?.Id;
+            var departementId = employe.DepartementOrg?.Id;
+            var divisionId = employe.DivisionOrg?.Id;
+            var serviceId = employe.ServiceOrg?.Id;
+
+            var estAMoi = await _context.Affectations.AnyAsync(a => a.ActifId == id && a.EmployeId == employe.Id);
+            var estPartageDansMonPerimetre =
+                actif.AgenceId == agenceId ||
+                (departementId.HasValue && actif.DepartementId == departementId) ||
+                (divisionId.HasValue && actif.DivisionId == divisionId) ||
+                (serviceId.HasValue && actif.ServiceId == serviceId) ||
+                actif.UniteId == employe.UniteId;
+            var estChezUnCollegueDeMonAgence = agenceId.HasValue && await _context.Affectations
+                .AnyAsync(a => a.ActifId == id && a.DateRetrait == null
+                    && a.Employe!.Unite!.Service!.Division!.Departement!.AgenceId == agenceId.Value);
+
+            if (!estAMoi && !estPartageDansMonPerimetre && !estChezUnCollegueDeMonAgence)
+            {
+                return Forbid();
+            }
+
+            var historique = await _context.Affectations
+                .Include(af => af.Employe)
+                .Where(af => af.ActifId == id)
+                .OrderByDescending(af => af.DateAffectation)
+                .ToListAsync();
+
+            ViewBag.Historique = historique;
+            return View(actif);
+        }
     }
 }
