@@ -2,9 +2,7 @@
 
 namespace EcoTrack.Models
 {
-    /// <summary>
-    /// Niveau 1 : l'agence ou le site (ex: "Agence LOMÉ CENTRE").
-    /// </summary>
+    
     public class Agence
     {
         public int Id { get; set; }

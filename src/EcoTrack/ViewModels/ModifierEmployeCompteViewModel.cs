@@ -2,10 +2,7 @@
 
 namespace EcoTrack.ViewModels
 {
-    /// <summary>
-    /// Utilisé par l'admin depuis "Tous les employés" pour modifier à la fois
-    /// les informations de l'employé (poste, téléphone) et son compte (username, email).
-    /// </summary>
+    
     public class ModifierEmployeCompteViewModel
     {
         [Required(ErrorMessage = "Le nom est obligatoire.")]
@@ -33,7 +30,7 @@ namespace EcoTrack.ViewModels
 
         [Required(ErrorMessage = "Le numéro de téléphone est obligatoire.")]
         [RegularExpression(@"^\d{6,10}$", ErrorMessage = "Le numéro doit contenir uniquement des chiffres (6 à 10).")]
-        [Display(Name = "Numéro (sans l'indicatif)")]
+        [Display(Name = "Téléphone")]
         public string NumeroTelephone { get; set; } = string.Empty;
     }
 }

@@ -29,7 +29,7 @@ namespace EcoTrack.ViewModels
 
         [Required(ErrorMessage = "Le numéro de téléphone est obligatoire.")]
         [RegularExpression(@"^\d{6,10}$", ErrorMessage = "Le numéro doit contenir uniquement des chiffres (6 à 10).")]
-        [Display(Name = "Numéro (sans l'indicatif)")]
+        [Display(Name = "Téléphone:")]
         public string NumeroTelephone { get; set; } = string.Empty;
 
         [StringLength(100)]
