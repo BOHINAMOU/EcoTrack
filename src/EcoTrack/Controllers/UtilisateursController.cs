@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using IEmailSender = EcoTrack.Infrastructure.IEmailSender;
 
 namespace EcoTrack.Controllers
@@ -295,6 +298,41 @@ namespace EcoTrack.Controllers
             ViewBag.UtilisateurIdFiltre = utilisateurId;
 
             return View(actions);
+        }
+
+        // GET /Utilisateurs/ActionsPdf?utilisateurId=...
+        // Meme filtre que la page Actions : vide = tout le monde, sinon un utilisateur precis.
+        public async Task<IActionResult> ActionsPdf(string? utilisateurId)
+        {
+            var requete = _context.JournalActions
+                .Include(j => j.Utilisateur)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(utilisateurId))
+            {
+                requete = requete.Where(j => j.UtilisateurId == utilisateurId);
+            }
+
+            var actions = await requete
+                .OrderByDescending(j => j.DateAction)
+                .Take(500)
+                .ToListAsync();
+
+            string? nomUtilisateurFiltre = null;
+            if (!string.IsNullOrEmpty(utilisateurId))
+            {
+                var u = await _userManager.FindByIdAsync(utilisateurId);
+                nomUtilisateurFiltre = u is not null ? $"{u.Prenom} {u.Nom}" : null;
+            }
+
+            var document = new RapportActionsDocument(actions, nomUtilisateurFiltre);
+            var pdf = document.GeneratePdf();
+
+            var nomFichier = nomUtilisateurFiltre is not null
+                ? $"Actions_{nomUtilisateurFiltre.Replace(" ", "_")}.pdf"
+                : "Actions_Tous_Utilisateurs.pdf";
+
+            return File(pdf, "application/pdf", nomFichier);
         }
 
         // GET /Utilisateurs/CreerTemporaire
@@ -619,6 +657,87 @@ namespace EcoTrack.Controllers
             }
 
             return RedirectToAction(retour ?? nameof(Index));
+        }
+    }
+
+    public class RapportActionsDocument : IDocument
+    {
+        private readonly List<JournalAction> _actions;
+        private readonly string? _nomUtilisateurFiltre;
+
+        public RapportActionsDocument(List<JournalAction> actions, string? nomUtilisateurFiltre)
+        {
+            _actions = actions;
+            _nomUtilisateurFiltre = nomUtilisateurFiltre;
+        }
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                page.Header().Background("#0d3b66").Padding(15).Row(row =>
+                {
+                    row.RelativeItem().Column(col =>
+                    {
+                        col.Item().Text("HISTORIQUE DES ACTIONS").FontSize(16).Bold().FontColor(Colors.White);
+                        col.Item().Text("EcoTrack — Ecobank Togo").FontSize(9).FontColor(Colors.Grey.Lighten3);
+                    });
+                    row.ConstantItem(180).AlignRight().Column(col =>
+                    {
+                        col.Item().Text(_nomUtilisateurFiltre ?? "Tous les utilisateurs").FontSize(9).FontColor(Colors.Grey.Lighten3);
+                        col.Item().Text($"{_actions.Count} action(s)").FontSize(9).FontColor(Colors.Grey.Lighten3);
+                    });
+                });
+
+                page.Content().PaddingVertical(15).Column(col =>
+                {
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(c =>
+                        {
+                            c.ConstantColumn(110);
+                            c.RelativeColumn(2);
+                            c.RelativeColumn(2);
+                            c.RelativeColumn(5);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().Background("#0d3b66").Padding(4).Text("Date").FontColor(Colors.White).Bold();
+                            header.Cell().Background("#0d3b66").Padding(4).Text("Utilisateur").FontColor(Colors.White).Bold();
+                            header.Cell().Background("#0d3b66").Padding(4).Text("Type").FontColor(Colors.White).Bold();
+                            header.Cell().Background("#0d3b66").Padding(4).Text("Description").FontColor(Colors.White).Bold();
+                        });
+
+                        foreach (var action in _actions)
+                        {
+                            table.Cell().Padding(4).Text(action.DateAction.ToString("dd/MM/yyyy HH:mm"));
+                            table.Cell().Padding(4).Text($"{action.Utilisateur?.Prenom} {action.Utilisateur?.Nom}");
+                            table.Cell().Padding(4).Text(action.TypeAction);
+                            table.Cell().Padding(4).Text(action.Description);
+                        }
+                    });
+
+                    if (!_actions.Any())
+                    {
+                        col.Item().PaddingTop(10).Text("Aucune action enregistrée pour ce filtre.").Italic().FontColor(Colors.Grey.Darken1);
+                    }
+                });
+
+                page.Footer().Padding(10).Row(row =>
+                {
+                    row.RelativeItem().Text("EcoTrack — Système de gestion des actifs Ecobank Togo").FontSize(8).FontColor(Colors.Grey.Darken1);
+                    row.RelativeItem().AlignRight().Text(x =>
+                    {
+                        x.Span("Généré le ").FontSize(8).FontColor(Colors.Grey.Darken1);
+                        x.Span(DateTime.UtcNow.ToString("dd/MM/yyyy à HH:mm")).FontSize(8).FontColor(Colors.Grey.Darken1);
+                    });
+                });
+            });
         }
     }
 }
